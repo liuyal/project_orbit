@@ -2,7 +2,17 @@
 
 ## postgres database setup
 ```
-
+CREATE TABLE public.test_cases (
+    tc_id varchar NOT NULL,
+    tc_name varchar NULL,
+    tc_title varchar NULL,
+    tc_labels _varchar NULL,
+    tc_folder_id int4 NULL,
+    tc_script text NULL,
+    tc_freq varchar NULL,
+    tc_status varchar NULL,
+    CONSTRAINT test_cases_pk PRIMARY KEY (test_case_id)
+);
 ```
 
 ## Useful docker commands

@@ -14,3 +14,7 @@ Stop and remove all containers
 docker stop $(docker ps -q)
 docker rm -f $(docker ps -aq)
 ```
+Remove all images
+```
+docker system prune -af
+```

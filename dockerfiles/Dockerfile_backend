@@ -13,7 +13,6 @@ RUN apt-get update && \
         net-tools \
         iputils-ping \
         tcpdump \
-        iperf3 \
         iproute2 \
         iptables \
         openssh-server \

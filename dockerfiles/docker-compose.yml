@@ -1,23 +1,26 @@
 version: '0.1.0'
 services:
-  web-client:
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile_frontend
-    image: web-client-app
+    image: frontend-app:latest
+    container_name: frontend-app
     ports:
       - "80:80"
-  server:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile_backend
-    image: server-app
+    image: backend-app:latest
+    container_name: backend-app
     ports:
       - "5000:5000"
   db:
     build:
       context: .
       dockerfile: Dockerfile_mongodb
-    image: db-app
+    image: db-app:latest
+    container_name: db-app
     ports:
       - "27017:27017"

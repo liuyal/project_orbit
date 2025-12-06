@@ -1,3 +1,10 @@
+# ================================================================
+# Orbit API
+# Description: FastAPI backend for the Orbit application.
+# Author: Jerry
+# License: MIT
+# ================================================================
+
 # routes/cycles.py
 
 from fastapi import APIRouter, status

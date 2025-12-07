@@ -1,0 +1,39 @@
+# ================================================================
+# Orbit API
+# Description: FastAPI backend for the Orbit application.
+# Author: Jerry
+# License: MIT
+# ================================================================
+
+# model/projects.py
+
+from fastapi import APIRouter
+from pydantic import BaseModel
+
+router = APIRouter()
+
+
+class Project(BaseModel):
+    _id: str
+    project_key: str
+    description: str
+    test_case_count: int
+    test_execution_count: int
+    test_cycle_count: int
+    created_at: str
+    updated_at: str
+    is_active: bool
+    model_config = {"extra": "forbid"}
+
+
+class ProjectCreate(BaseModel):
+    project_key: str
+    description: str = ""
+    is_active: bool = True
+    model_config = {"extra": "forbid"}
+
+
+class ProjectUpdate(BaseModel):
+    description: str = None
+    is_active: bool = None
+    model_config = {"extra": "forbid"}

@@ -8,50 +8,15 @@
 # routes/execution.py
 
 from fastapi import APIRouter, Request, status
-from pydantic import BaseModel
+
+from backend.orbit_def.orbit_def import DB_COLLECTION_TE
+from backend.models.test_executions import TestExecution, TestExecutionCreate, TestExecutionUpdate
 
 router = APIRouter()
 
 
-class TestExecution(BaseModel):
-    _id: str
-    execution_key: str
-    project_key: str
-    test_cycle_key: str
-    test_case_key: str
-    result: str
-    custom_fields: dict[str, str]
-    comments: str
-    started_at: str
-    finished_at: str
-    links: list[str]
-
-
-class TestExecutionCreate(BaseModel):
-    execution_key: str
-    project_key: str
-    test_cycle_key: str
-    test_case_key: str
-    result: str = None
-    custom_fields: dict[str, str] = None
-    comments: str = None
-    started_at: str = None
-    finished_at: str = None
-    links: list[str] = None
-
-
-class TestExecutionUpdate(BaseModel):
-    execution_key: str
-    result: str = None
-    custom_fields: dict[str, str] = None
-    comments: str = None
-    started_at: str = None
-    finished_at: str = None
-    links: list[str] = None
-
-
 @router.get("/api/projects/{project_key}/test-cases/{test_case_key}/executions",
-            tags=["executions"],
+            tags=[DB_COLLECTION_TE],
             response_model=list[TestExecution])
 async def list_executions_for_test_case(request: Request,
                                         project_key: str,
@@ -59,9 +24,8 @@ async def list_executions_for_test_case(request: Request,
     """List all test executions for a specific test case within a project."""
 
 
-
 @router.post("/api/projects/{project_key}/test-cases/{test_case_key}/executions",
-             tags=["executions"],
+             tags=[DB_COLLECTION_TE],
              response_model=TestExecution,
              status_code=status.HTTP_201_CREATED)
 async def create_execution_for_test_case(request: Request,
@@ -71,18 +35,16 @@ async def create_execution_for_test_case(request: Request,
     """Create a new test execution for a specific test case within a project."""
 
 
-
 @router.get("/api/executions/{execution_key}",
-            tags=["executions"],
+            tags=[DB_COLLECTION_TE],
             response_model=TestExecution)
 async def get_execution(request: Request,
                         execution_key: str):
     """Retrieve a specific test execution by its ID."""
 
 
-
 @router.put("/api/executions/{execution_key}",
-            tags=["executions"],
+            tags=[DB_COLLECTION_TE],
             response_model=TestExecutionUpdate)
 async def update_execution(request: Request,
                            execution_key: str,
@@ -90,11 +52,9 @@ async def update_execution(request: Request,
     """Update a specific test execution by its ID."""
 
 
-
 @router.delete("/api/executions/{execution_key}",
-               tags=["executions"],
+               tags=[DB_COLLECTION_TE],
                status_code=status.HTTP_204_NO_CONTENT)
 async def delete_execution(request: Request,
                            execution_key: str):
     """Delete a specific test execution by its ID."""
-

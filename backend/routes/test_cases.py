@@ -8,68 +8,35 @@
 # routes/test_cases.py
 
 from fastapi import APIRouter, Request, status
-from pydantic import BaseModel
+from starlette.responses import JSONResponse
+
+from backend.orbit_def.orbit_def import DB_COLLECTION_TC
+from backend.models.test_cases import TestCase, TestCaseCreate, TestCaseUpdate
+from backend.tools.utility import (
+    convert_objectid
+)
 
 router = APIRouter()
 
 
-class TestCase(BaseModel):
-    _id: str
-    test_case_key: str
-    project_key: str
-    title: str
-    description: str
-    folder: str
-    status: str
-    priority: str
-    test_scripts: str = None
-    last_result: str = None
-    last_execution_id: str = None
-    test_frequency: list[str] = None
-    labels: list[str] = None
-    links: list[str] = None
-
-
-class TestCaseCreate(BaseModel):
-    test_case_key: str
-    project_key: str
-    title: str
-    description: str
-    folder: str
-    status: str
-    priority: str = None
-    test_scripts: str = None
-    last_result: str = None
-    last_execution_key: str = None
-    test_frequency: list[str] = None
-    labels: list[str] = None
-    links: list[str] = None
-
-
-class TestCaseUpdate(BaseModel):
-    title: str = None
-    description: str = None
-    folder: str = None
-    status: str = None
-    priority: str = None
-    test_scripts: str = None
-    last_result: str = None
-    last_execution_key: str = None
-    test_frequency: list[str] = None
-    labels: list[str] = None
-    links: list[str] = None
-
-
 @router.get("/api/projects/{project_key}/test-cases/",
-            tags=["test-cases"],
+            tags=[DB_COLLECTION_TC],
             response_model=list[TestCase])
 async def list_test_cases(request: Request,
                           project_key: str):
     """List all test cases in the specified project."""
 
+    db = request.app.state.db
+    projects_cursor = db[DB_COLLECTION_TC].find({})
+    projects = await projects_cursor.to_list()
+    projects = [convert_objectid(p) for p in projects]
+
+    return JSONResponse(status_code=status.HTTP_200_OK,
+                        content=projects)
+
 
 @router.post("/api/projects/{project_key}/test-cases/",
-             tags=["test-cases"],
+             tags=[DB_COLLECTION_TC],
              status_code=status.HTTP_204_NO_CONTENT)
 async def create_test_case(request: Request,
                            project_key: str,
@@ -78,7 +45,7 @@ async def create_test_case(request: Request,
 
 
 @router.delete("/api/projects/{project_key}/test-cases/",
-               tags=["test-cases"],
+               tags=[DB_COLLECTION_TC],
                status_code=status.HTTP_204_NO_CONTENT)
 async def delete_all_test_case(request: Request,
                                project_key: str):
@@ -86,7 +53,7 @@ async def delete_all_test_case(request: Request,
 
 
 @router.get("/api/projects/{project_key}/test-cases/{test_case_key}",
-            tags=["test-cases"],
+            tags=[DB_COLLECTION_TC],
             response_model=TestCase)
 async def get_test_case_by_key(request: Request,
                                project_key: str
@@ -95,7 +62,7 @@ async def get_test_case_by_key(request: Request,
 
 
 @router.put("/api/projects/{project_key}/test-cases/{test_case_key}",
-            tags=["test-cases"],
+            tags=[DB_COLLECTION_TC],
             response_model=TestCase)
 async def update_test_case_by_key(request: Request,
                                   project_key: str,
@@ -105,7 +72,7 @@ async def update_test_case_by_key(request: Request,
 
 
 @router.delete("/api/projects/{project_key}/test-cases/{test_case_key}",
-               tags=["test-cases"],
+               tags=[DB_COLLECTION_TC],
                status_code=status.HTTP_204_NO_CONTENT)
 async def delete_test_case_by_key(request: Request,
                                   project_key: str,

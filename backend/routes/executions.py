@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 class TestExecution(BaseModel):
-    id: str
+    _id: str
     execution_key: str
     project_key: str
     test_cycle_key: str

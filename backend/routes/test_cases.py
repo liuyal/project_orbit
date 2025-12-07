@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 class TestCase(BaseModel):
-    id: str
+    _id: str
     test_case_key: str
     project_key: str
     title: str

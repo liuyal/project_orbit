@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 class TestCycle(BaseModel):
-    id: str
+    _id: str
     cycle_key: str
     project_key: str
     title: str

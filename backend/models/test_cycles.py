@@ -10,8 +10,8 @@
 from fastapi import APIRouter, Request, status
 from pydantic import BaseModel
 
-from backend.orbit_def.orbit_def import DB_COLLECTION_TCY
 from backend.models.test_executions import TestExecution
+from backend.orbit_def.orbit_def import DB_COLLECTION_TCY
 
 router = APIRouter()
 
@@ -27,6 +27,8 @@ class TestCycle(BaseModel):
     status: dict[str, int] = None
     executions: list[str] = []
     test_cases: list[str] = []
+    model_config = {"extra": "forbid"}
+
 
 
 class TestCycleCreate(BaseModel):
@@ -37,6 +39,7 @@ class TestCycleCreate(BaseModel):
     created_at: str
     updated_at: str = None
     status: dict[str, int] = None
+    model_config = {"extra": "forbid"}
 
 
 class TestCycleUpdate(BaseModel):
@@ -47,6 +50,7 @@ class TestCycleUpdate(BaseModel):
     status: dict[str, int] = None
     executions: list[str] = []
     test_cases: list[str] = []
+    model_config = {"extra": "forbid"}
 
 
 @router.get("/api/cycles/",

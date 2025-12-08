@@ -24,7 +24,21 @@ from orbit_def.orbit_def import (
 
 
 def pydantic_to_mongo_jsonschema(pydantic_schema: dict):
-    """Convert a Pydantic JSON schema to a MongoDB JSON schema."""
+    """Convert a Pydantic JSON schema to a MongoDB JSON schema, supporting Optionals (| None)."""
+
+    def is_required(field_name):
+        """ Only non-optional fields should be required """
+
+        field = pydantic_schema["properties"][field_name]
+        if "anyOf" in field:
+            for option in field["anyOf"]:
+                if option.get("type") == "null":
+                    return False
+
+        if field.get("nullable"):
+            return False
+
+        return True
 
     type_map = {
         "string": "string",
@@ -36,13 +50,64 @@ def pydantic_to_mongo_jsonschema(pydantic_schema: dict):
     props = {}
     required = pydantic_schema.get("required", [])
     for name, field in pydantic_schema["properties"].items():
-        bson_type = type_map.get(field.get("type", "string"), "string")
-        mongo_name = "_id" if name == "id" else name
-        props[mongo_name] = {"bsonType": bson_type}
+        # Determine bsonType(s)
+        bson_types = set()
+
+        # Handle Pydantic's 'anyOf' for Optionals
+        if "anyOf" in field:
+            for option in field["anyOf"]:
+                if option.get("type") == "null":
+                    bson_types.add("null")
+
+                elif option.get("type") == "array" and option.get("items", {}).get("type") == "string":
+                    bson_types.add("array:string")
+
+                elif option.get("type"):
+                    bson_types.add(type_map.get(option["type"], option["type"]))
+        else:
+            # Handle 'nullable' (Pydantic 2+)
+            if field.get("nullable"):
+                bson_types.add("null")
+
+            if field.get("type") == "array" and field.get("items", {}).get("type") == "string":
+                bson_types.add("array:string")
+
+            elif field.get("type"):
+                bson_types.add(type_map.get(field["type"], field["type"]))
+
+        # Convert array:string to MongoDB array of string
+        if "array:string" in bson_types:
+            bson_types.discard("array:string")
+            arr_schema = {"bsonType": "array", "items": {"bsonType": "string"}}
+
+            if bson_types:
+                # e.g. array of string or null
+                anyof_list = [arr_schema] + [{"bsonType": t} for t in bson_types if t != "null"]
+                if "null" in bson_types:
+                    anyof_list.append({"bsonType": "null"})
+
+                arr_schema = {"anyOf": anyof_list}
+                props["_id" if name == "id" else name] = arr_schema
+
+            else:
+                props["_id" if name == "id" else name] = arr_schema
+
+        else:
+            # If multiple types, use a list
+            if len(bson_types) > 1:
+                props["_id" if name == "id" else name] = {"bsonType": list(bson_types)}
+
+            elif len(bson_types) == 1:
+                props["_id" if name == "id" else name] = {"bsonType": list(bson_types)[0]}
+
+            else:
+                props["_id" if name == "id" else name] = {"bsonType": "string"}
+
+    required_fields = ["_id" if r == "id" else r for r in required if is_required(r)]
 
     return {
         "bsonType": "object",
-        "required": [("_id" if r == "id" else r) for r in required],
+        "required": required_fields,
         "properties": props
     }
 

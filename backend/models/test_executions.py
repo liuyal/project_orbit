@@ -25,6 +25,7 @@ class TestExecution(BaseModel):
     started_at: str
     finished_at: str
     links: list[str]
+    model_config = {"extra": "forbid"}
 
 
 class TestExecutionCreate(BaseModel):
@@ -38,6 +39,7 @@ class TestExecutionCreate(BaseModel):
     started_at: str = None
     finished_at: str = None
     links: list[str] = None
+    model_config = {"extra": "forbid"}
 
 
 class TestExecutionUpdate(BaseModel):
@@ -48,3 +50,4 @@ class TestExecutionUpdate(BaseModel):
     started_at: str = None
     finished_at: str = None
     links: list[str] = None
+    model_config = {"extra": "forbid"}

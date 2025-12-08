@@ -21,7 +21,7 @@ class Project(BaseModel):
     test_execution_count: int
     test_cycle_count: int
     created_at: str
-    updated_at: str
+    updated_at: str | None
     is_active: bool
     model_config = {"extra": "forbid"}
 

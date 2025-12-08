@@ -17,26 +17,28 @@ class TestCase(BaseModel):
     _id: str
     test_case_key: str
     project_key: str
-    title: str
-    description: str
-    folder: str
-    status: str
-    priority: str
-    test_scripts: str = None
-    last_result: str = None
-    last_execution_id: str = None
-    test_frequency: list[str] = None
-    labels: list[str] = None
-    links: list[str] = None
+    title: str | None
+    description: str | None
+    folder: str | None
+    created_at: str
+    updated_at: str | None
+    status: str | None
+    priority: str | None
+    test_scripts: str | None
+    last_result: str | None
+    last_execution_key: str | None
+    test_frequency: list[str] | None
+    labels: list[str] | None
+    links: list[str] | None
 
 
 class TestCaseCreate(BaseModel):
     test_case_key: str
     project_key: str
-    title: str
-    description: str
-    folder: str
-    status: str
+    title: str = None
+    description: str = None
+    folder: str = None
+    status: str = None
     priority: str = None
     test_scripts: str = None
     last_result: str = None

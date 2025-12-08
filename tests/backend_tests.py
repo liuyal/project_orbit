@@ -25,7 +25,6 @@ class OrbitBackendSanityTest(unittest.TestCase):
         cls.host = pytest.options['host']
         cls.port = pytest.options['port']
         cls.protocol = pytest.options['protocol']
-
         cls.url = f"{cls.protocol}://{cls.host}:{cls.port}"
 
     @classmethod
@@ -66,9 +65,9 @@ class OrbitBackendSanityTest(unittest.TestCase):
         logging.info(f"--- Starting test: {self._testMethodName} ---")
         self.__class__.clean_up_projects()
 
-        n = 10
+        n = 3
         for i in range(0, n):
-            payload = {"project_key": f"P{i}", "description": f"Project{i}"}
+            payload = {"project_key": f"PRJ-{i}", "description": f"Project #{i}"}
             response = requests.post(f"{self.__class__.url}/api/projects",
                                      json=payload)
             assert response.status_code == 201

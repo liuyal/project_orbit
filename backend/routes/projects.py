@@ -10,12 +10,9 @@
 from fastapi import APIRouter, Request, status, Response
 from starlette.responses import JSONResponse
 
-from backend.orbit_def.orbit_def import DB_COLLECTION_PRJ
 from backend.models.projects import Project, ProjectCreate, ProjectUpdate
-from backend.tools.utility import (
-    convert_objectid,
-    get_current_utc_time
-)
+from backend.orbit_def.orbit_def import DB_COLLECTION_PRJ
+from backend.tools.utility import convert_objectid, get_current_utc_time
 
 router = APIRouter()
 
@@ -38,6 +35,7 @@ async def list_projects(request: Request):
 
 @router.post("/api/projects",
              tags=[DB_COLLECTION_PRJ],
+             response_model=Project,
              status_code=status.HTTP_201_CREATED)
 async def create_project(request: Request,
                          project: ProjectCreate):
@@ -55,7 +53,8 @@ async def create_project(request: Request,
 
     if result is not None:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
-                            content={"error": f"Project {request_data['project_key']} "
+                            content={"error": f"Project "
+                                              f"{request_data['project_key']} "
                                               f"already exists."})
 
     # Initialize counts and timestamps
@@ -70,7 +69,13 @@ async def create_project(request: Request,
     db_insert["_id"] = request_data["project_key"]
     await db[DB_COLLECTION_PRJ].insert_one(db_insert)
 
-    return Response(status_code=status.HTTP_201_CREATED)
+    # Retrieve the updated project
+    created_project = await db[DB_COLLECTION_PRJ].find_one(
+        {"project_key": request_data["project_key"]})
+    created_project = convert_objectid(created_project)
+
+    return JSONResponse(status_code=status.HTTP_201_CREATED,
+                        content=created_project)
 
 
 @router.get("/api/projects/{project_key}",
@@ -83,12 +88,15 @@ async def get_project(request: Request,
 
     # Retrieve project from database
     db = request.app.state.db
-    result = await db[DB_COLLECTION_PRJ].find_one({"project_key": project_key})
+    result = await db[DB_COLLECTION_PRJ].find_one(
+        {"project_key": project_key})
 
     if result is None:
         # Project not found
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
-                            content={"error": f"Project {project_key} not found."})
+                            content={"error": f"Project "
+                                              f"{project_key} "
+                                              f"not found."})
     else:
         # Convert ObjectId to string
         result = convert_objectid(result)
@@ -120,10 +128,13 @@ async def update_project(request: Request,
 
     if result.matched_count == 0:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
-                            content={"error": f"Project {project_key} not found."})
+                            content={"error": f"Project "
+                                              f"{project_key} "
+                                              f"not found."})
 
     # Retrieve the updated project
-    updated_project = await db[DB_COLLECTION_PRJ].find_one({"project_key": project_key})
+    updated_project = await db[DB_COLLECTION_PRJ].find_one(
+        {"project_key": project_key})
     updated_project = convert_objectid(updated_project)
 
     return JSONResponse(status_code=status.HTTP_200_OK,
@@ -139,11 +150,16 @@ async def delete_project(request: Request,
 
     # Delete the project from the database
     db = request.app.state.db
-    result = await db[DB_COLLECTION_PRJ].delete_one({"project_key": project_key})
+    result = await db[DB_COLLECTION_PRJ].delete_one(
+        {"project_key": project_key})
 
     if result.deleted_count == 0:
         # Project not found
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
-                            content={"error": f"Project {project_key} not found."})
+                            content={"error": f"Project "
+                                              f"{project_key} "
+                                              f"not found."})
+
+    # TODO: add check for not existing test-cases, test-executions, test-cycles linked
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -57,7 +57,6 @@ async def lifespan(app):
     collections = await client[DB_NAME].list_collection_names()
     for collection, schema in DB_COLLECTIONS:
         if collection not in collections:
-            print(schema)
             await client[DB_NAME].create_collection(collection,
                                                     validator={"$jsonSchema": schema})
 

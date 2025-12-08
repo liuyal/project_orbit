@@ -7,14 +7,12 @@
 
 # routes/test_cases.py
 
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, Request, status, Response
 from starlette.responses import JSONResponse
 
-from backend.orbit_def.orbit_def import DB_COLLECTION_TC
 from backend.models.test_cases import TestCase, TestCaseCreate, TestCaseUpdate
-from backend.tools.utility import (
-    convert_objectid
-)
+from backend.orbit_def.orbit_def import DB_COLLECTION_PRJ, DB_COLLECTION_TC
+from backend.tools.utility import convert_objectid, get_current_utc_time
 
 router = APIRouter()
 
@@ -27,21 +25,59 @@ async def list_test_cases(request: Request,
     """List all test cases in the specified project."""
 
     db = request.app.state.db
-    projects_cursor = db[DB_COLLECTION_TC].find({})
-    projects = await projects_cursor.to_list()
-    projects = [convert_objectid(p) for p in projects]
+    tc_cursor = db[DB_COLLECTION_TC].find({})
+    test_cases = await tc_cursor.to_list()
+    test_cases = [convert_objectid(p) for p in test_cases]
 
     return JSONResponse(status_code=status.HTTP_200_OK,
-                        content=projects)
+                        content=test_cases)
 
 
 @router.post("/api/projects/{project_key}/test-cases/",
              tags=[DB_COLLECTION_TC],
-             status_code=status.HTTP_204_NO_CONTENT)
+             status_code=status.HTTP_201_CREATED)
 async def create_test_case(request: Request,
                            project_key: str,
                            test_case: TestCaseCreate):
     """Create a new test case in the specified project."""
+
+    current_time = get_current_utc_time()
+
+    # Prepare request data
+    request_data = test_case.model_dump()
+
+    # Check if test_case_key already exists
+    db = request.app.state.db
+    result = await db[DB_COLLECTION_TC].find_one(
+        {"test_case_key": request_data["test_case_key"]})
+
+    if result is not None:
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"error": f"test case "
+                                              f"{request_data['test_case_key']} "
+                                              f"already exists."})
+
+    # Check if project_key exists
+    result = await db[DB_COLLECTION_PRJ].find_one(
+        {"project_key": request_data["project_key"]})
+
+    if result is None:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
+                            content={"error": f"Project "
+                                              f"{request_data['project_key']} "
+                                              f"not found."})
+
+    # Initialize counts and timestamps
+    request_data["project_key"] = project_key
+    request_data["created_at"] = current_time
+    request_data["updated_at"] = current_time
+
+    # Assign _id for MongoDB
+    db_insert = TestCase(**request_data).model_dump()
+    db_insert["_id"] = request_data["test_case_key"]
+    await db[DB_COLLECTION_TC].insert_one(db_insert)
+
+    return Response(status_code=status.HTTP_201_CREATED)
 
 
 @router.delete("/api/projects/{project_key}/test-cases/",

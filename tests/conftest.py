@@ -34,10 +34,10 @@ def pytest_addoption(parser):
         help='Protocol to connect to the backend server'
     )
     parser.addoption(
-        '--debug-log',
-        dest='debug-log',
-        action='store_true',
-        help='Set debug verbose output'
+        '--loglevel',
+        dest='loglevel',
+        default='INFO',
+        help='Set logging level'
     )
 
 
@@ -49,13 +49,14 @@ def pytest_configure(config):
     option_names = ['host',
                     'port',
                     'protocol',
-                    'debug-log']
+                    'loglevel',]
 
     pytest.options = {opt: config.getoption(opt, None) for opt in option_names}
-    debug = pytest.options["debug-log"]
+    loglevel_str = pytest.options["loglevel"].upper()
+    loglevel = getattr(logging, loglevel_str, logging.INFO)
 
     logging.basicConfig(
         datefmt="%Y-%m-%d %H:%M:%S",
         format="[%(asctime)s.%(msecs)03d] %(levelname)s: %(message)s",
         stream=sys.stdout,
-        level=logging.INFO if not debug else logging.DEBUG)
+        level=loglevel)

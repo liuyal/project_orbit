@@ -23,6 +23,7 @@ router = APIRouter()
 async def get_all_test_cases(request: Request):
     """Get all test cases."""
 
+    # Retrieve all test cases from database
     db = request.app.state.db
     tc_cursor = db[DB_COLLECTION_TC].find({})
     test_cases = await tc_cursor.to_list()
@@ -36,9 +37,10 @@ async def get_all_test_cases(request: Request):
             tags=[DB_COLLECTION_TC],
             response_model=list[TestCase])
 async def get_all_test_cases_by_project(request: Request,
-                                     project_key: str):
+                                        project_key: str):
     """Get all test cases in the specified project."""
 
+    # Retrieve test cases from database matching project_key
     db = request.app.state.db
     tc_cursor = db[DB_COLLECTION_TC].find({})
     test_cases = await tc_cursor.to_list()
@@ -102,6 +104,13 @@ async def delete_all_test_case_by_project(request: Request,
                                           project_key: str):
     """Delete all test cases in the specified project."""
 
+    # Delete test cases from database matching project_key
+    db = request.app.state.db
+    await db[DB_COLLECTION_TC].delete_many(
+        {"project_key": project_key})
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
 @router.get("/api/projects/{project_key}/test-cases/{test_case_key}",
             tags=[DB_COLLECTION_TC],
@@ -110,6 +119,24 @@ async def get_test_case_by_test_case_key(request: Request,
                                          project_key: str,
                                          test_case_key: str):
     """Retrieve a specific test case by its ID within the specified project."""
+
+    # Retrieve test case from database
+    db = request.app.state.db
+    result = await db[DB_COLLECTION_TC].find_one(
+        {"test_case_key": test_case_key,
+         "project_key": project_key})
+
+    if result is None:
+        # test case not found
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
+                            content={"error": f"Test case "
+                                              f"{test_case_key} "
+                                              f"not found."})
+    else:
+        # Convert ObjectId to string
+        result = convert_objectid(result)
+        return JSONResponse(status_code=status.HTTP_200_OK,
+                            content=result)
 
 
 @router.put("/api/projects/{project_key}/test-cases/{test_case_key}",
@@ -121,6 +148,36 @@ async def update_test_case_by_test_case_key(request: Request,
                                             test_case: TestCaseUpdate):
     """Update a specific test case by its ID within the specified project."""
 
+    current_time = get_current_utc_time()
+
+    # Prepare request data, excluding None values
+    request_data = test_case.model_dump()
+    request_data = {k: v for k, v in request_data.items() if v is not None}
+    request_data["updated_at"] = current_time
+
+    # Update the project in the database
+    db = request.app.state.db
+    result = await db[DB_COLLECTION_TC].update_one(
+        {"test_case_key": test_case_key,
+         "project_key": project_key},
+        {"$set": request_data}
+    )
+
+    if result.matched_count == 0:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
+                            content={"error": f"Test case "
+                                              f"{test_case_key} "
+                                              f"not found."})
+
+    # Retrieve the updated test case
+    updated_test_case = await db[DB_COLLECTION_TC].find_one(
+        {"test_case_key": test_case_key,
+         "project_key": project_key})
+    updated_test_case = convert_objectid(updated_test_case)
+
+    return JSONResponse(status_code=status.HTTP_200_OK,
+                        content=updated_test_case)
+
 
 @router.delete("/api/projects/{project_key}/test-cases/{test_case_key}",
                tags=[DB_COLLECTION_TC],
@@ -129,3 +186,18 @@ async def delete_test_case_by_test_case_key(request: Request,
                                             project_key: str,
                                             test_case_key: str):
     """Delete a specific test case by its ID within the specified project."""
+
+    # Delete the project from the database
+    db = request.app.state.db
+    result = await db[DB_COLLECTION_TC].delete_one(
+        {"test_case_key": test_case_key,
+         "project_key": project_key})
+
+    if result.deleted_count == 0:
+        # Test case not found
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
+                            content={"error": f"Test case "
+                                              f"{test_case_key} "
+                                              f"not found."})
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

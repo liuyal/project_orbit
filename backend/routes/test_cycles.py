@@ -9,8 +9,13 @@
 
 from fastapi import APIRouter, Request, status
 
+from backend.models.test_cycles import (
+    TestCycle,
+    TestCycleCreate,
+    TestCycleUpdate
+
+)
 from backend.orbit_def.orbit_def import DB_COLLECTION_TCY
-from backend.models.test_cycles import TestCycle, TestCycleCreate, TestCycleUpdate
 from backend.routes.test_executions import TestExecution
 
 router = APIRouter()
@@ -23,13 +28,22 @@ async def get_all_cycles(request: Request):
     """Get all test cycles."""
 
 
-@router.post("/api/cycles",
+@router.get("/api/projects/{project_key}/cycles",
+            tags=[DB_COLLECTION_TCY],
+            response_model=list[TestCycle])
+async def get_all_cycles_for_project(request: Request,
+                                     project_key: str):
+    """Get all test cycles for project."""
+
+
+@router.post("/api/projects/{project_key}/cycles",
              tags=[DB_COLLECTION_TCY],
              response_model=TestCycle,
              status_code=status.HTTP_201_CREATED)
-async def create_cycle(request: Request,
-                       cycle: TestCycleCreate):
-    """Create a new test cycle."""
+async def create_cycle_for_project(request: Request,
+                                   project_key: str,
+                                   cycle: TestCycleCreate):
+    """Create a new test cycle for project."""
 
 
 @router.get("/api/cycles/{cycle_key}",
@@ -57,16 +71,14 @@ async def delete_cycle(request: Request,
     """Delete a specific test cycle by its ID."""
 
 
-# List Cycle Executions
 @router.get("/api/cycles/{cycle_key}/executions",
             tags=[DB_COLLECTION_TCY],
             response_model=list[TestExecution])
-async def list_cycle_executions(request: Request,
-                                cycle_key: str):
-    """List all test executions associated with a specific test cycle."""
+async def get_cycle_executions(request: Request,
+                               cycle_key: str):
+    """Get all test executions associated with a specific test cycle."""
 
 
-# Add Execution To Cycle
 @router.post("/api/cycles/{cycle_key}/executions",
              tags=[DB_COLLECTION_TCY],
              status_code=status.HTTP_204_NO_CONTENT)

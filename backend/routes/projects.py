@@ -7,12 +7,24 @@
 
 # routes/projects.py
 
+import json
+
 from fastapi import APIRouter, Request, status, Response
 from starlette.responses import JSONResponse
 
-from backend.models.projects import Project, ProjectCreate, ProjectUpdate
+from backend.models.projects import (
+    Project,
+    ProjectCreate,
+    ProjectUpdate
+)
 from backend.orbit_def.orbit_def import DB_COLLECTION_PRJ
-from backend.tools.tools import convert_objectid, get_current_utc_time
+from backend.routes.test_cases import (
+    get_all_test_cases_by_project
+)
+from backend.tools.tools import (
+    convert_objectid,
+    get_current_utc_time
+)
 
 router = APIRouter()
 
@@ -148,8 +160,20 @@ async def delete_project_by_project_key(request: Request,
                                         project_key: str):
     """Endpoint to delete project"""
 
-    # Delete the project from the database
+    # Get all test-cases for the project
     db = request.app.state.db
+    response = await get_all_test_cases_by_project(request, project_key)
+    if len(json.loads(response.body.decode())) > 0:
+        # There are linked test-cases, cannot delete project
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"error": f"Project "
+                                              f"{project_key} "
+                                              f"has linked test-cases. "
+                                              f"Cannot delete."})
+
+    # TODO: add check for not existing test-executions, test-cycles linked
+
+    # Delete the project from the database
     result = await db[DB_COLLECTION_PRJ].delete_one(
         {"project_key": project_key})
 
@@ -160,6 +184,29 @@ async def delete_project_by_project_key(request: Request,
                                               f"{project_key} "
                                               f"not found."})
 
-    # TODO: add check for not existing test-cases, test-executions, test-cycles linked
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/api/projects/{project_key}/nuke",
+               tags=[DB_COLLECTION_PRJ],
+               status_code=status.HTTP_204_NO_CONTENT)
+async def force_delete_project_by_project_key(request: Request,
+                                              project_key: str):
+    """Endpoint to force delete project"""
+
+    db = request.app.state.db
+
+    # TODO: delete the linked test-cases, test-executions, test-cycles
+
+    # Delete the project from the database
+    result = await db[DB_COLLECTION_PRJ].delete_one(
+        {"project_key": project_key})
+
+    if result.deleted_count == 0:
+        # Project not found
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
+                            content={"error": f"Project "
+                                              f"{project_key} "
+                                              f"not found."})
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

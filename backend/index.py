@@ -30,6 +30,12 @@ def build_parser():
         description='Orbit FastAPI Backend'
     )
     parser.add_argument(
+        '--host',
+        dest='host',
+        default='127.0.0.1',
+        help='Set server host (default:127.0.0.1)'
+    )
+    parser.add_argument(
         '-p', '--port',
         dest='port',
         default=8000,
@@ -110,7 +116,7 @@ for router in routers:
 if __name__ == "__main__":
     log_conf = configure_logging_file(args.debug)
     uvicorn.run("index:app",
-                host="0.0.0.0",
+                host=args.host,
                 port=args.port,
-                reload=args.debug,
+                reload=False,  # args.debug,
                 log_config=log_conf)

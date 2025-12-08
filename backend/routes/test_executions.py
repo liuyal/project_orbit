@@ -9,7 +9,11 @@
 
 from fastapi import APIRouter, Request, status
 
-from backend.models.test_executions import TestExecution, TestExecutionCreate, TestExecutionUpdate
+from backend.models.test_executions import (
+    TestExecution,
+    TestExecutionCreate,
+    TestExecutionUpdate
+)
 from backend.orbit_def.orbit_def import DB_COLLECTION_TE
 
 router = APIRouter()
@@ -33,6 +37,15 @@ async def create_execution_for_test_case(request: Request,
                                          test_case_key: str,
                                          execution: TestExecutionCreate):
     """Create a new test execution for a specific test case within a project."""
+
+
+@router.delete("/api/projects/{project_key}/test-cases/{test_case_key}/executions",
+               tags=[DB_COLLECTION_TE],
+               status_code=status.HTTP_204_NO_CONTENT)
+async def delete_all_execution_for_test_case(request: Request,
+                                             project_key: str,
+                                             test_case_key: str):
+    """Delete all test executions for a specific test case within a project."""
 
 
 @router.get("/api/executions/{execution_key}",

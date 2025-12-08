@@ -16,14 +16,14 @@ from backend.routes.test_executions import TestExecution
 router = APIRouter()
 
 
-@router.get("/api/cycles/",
+@router.get("/api/cycles",
             tags=[DB_COLLECTION_TCY],
             response_model=list[TestCycle])
-async def list_cycles(request: Request):
-    """List all test cycles."""
+async def get_all_cycles(request: Request):
+    """Get all test cycles."""
 
 
-@router.post("/api/cycles/",
+@router.post("/api/cycles",
              tags=[DB_COLLECTION_TCY],
              response_model=TestCycle,
              status_code=status.HTTP_201_CREATED)

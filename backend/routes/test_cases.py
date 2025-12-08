@@ -17,12 +17,11 @@ from backend.tools.tools import convert_objectid, get_current_utc_time
 router = APIRouter()
 
 
-@router.get("/api/projects/{project_key}/test-cases/",
+@router.get("/api/test-cases",
             tags=[DB_COLLECTION_TC],
             response_model=list[TestCase])
-async def list_test_cases(request: Request,
-                          project_key: str):
-    """List all test cases in the specified project."""
+async def get_all_test_cases(request: Request):
+    """Get all test cases."""
 
     db = request.app.state.db
     tc_cursor = db[DB_COLLECTION_TC].find({})
@@ -33,12 +32,28 @@ async def list_test_cases(request: Request,
                         content=test_cases)
 
 
-@router.post("/api/projects/{project_key}/test-cases/",
+@router.get("/api/projects/{project_key}/test-cases",
+            tags=[DB_COLLECTION_TC],
+            response_model=list[TestCase])
+async def get_all_test_cases_by_project(request: Request,
+                                     project_key: str):
+    """Get all test cases in the specified project."""
+
+    db = request.app.state.db
+    tc_cursor = db[DB_COLLECTION_TC].find({})
+    test_cases = await tc_cursor.to_list()
+    test_cases = [convert_objectid(p) for p in test_cases]
+
+    return JSONResponse(status_code=status.HTTP_200_OK,
+                        content=test_cases)
+
+
+@router.post("/api/projects/{project_key}/test-cases",
              tags=[DB_COLLECTION_TC],
              status_code=status.HTTP_201_CREATED)
-async def create_test_case(request: Request,
-                           project_key: str,
-                           test_case: TestCaseCreate):
+async def create_test_case_by_project(request: Request,
+                                      project_key: str,
+                                      test_case: TestCaseCreate):
     """Create a new test case in the specified project."""
 
     current_time = get_current_utc_time()
@@ -80,37 +95,37 @@ async def create_test_case(request: Request,
     return Response(status_code=status.HTTP_201_CREATED)
 
 
-@router.delete("/api/projects/{project_key}/test-cases/",
+@router.delete("/api/projects/{project_key}/test-cases",
                tags=[DB_COLLECTION_TC],
                status_code=status.HTTP_204_NO_CONTENT)
-async def delete_all_test_case(request: Request,
-                               project_key: str):
+async def delete_all_test_case_by_project(request: Request,
+                                          project_key: str):
     """Delete all test cases in the specified project."""
 
 
 @router.get("/api/projects/{project_key}/test-cases/{test_case_key}",
             tags=[DB_COLLECTION_TC],
             response_model=TestCase)
-async def get_test_case_by_key(request: Request,
-                               project_key: str
-                               , test_case_key: str):
+async def get_test_case_by_test_case_key(request: Request,
+                                         project_key: str,
+                                         test_case_key: str):
     """Retrieve a specific test case by its ID within the specified project."""
 
 
 @router.put("/api/projects/{project_key}/test-cases/{test_case_key}",
             tags=[DB_COLLECTION_TC],
             response_model=TestCase)
-async def update_test_case_by_key(request: Request,
-                                  project_key: str,
-                                  test_case_key: str,
-                                  test_case: TestCaseUpdate):
+async def update_test_case_by_test_case_key(request: Request,
+                                            project_key: str,
+                                            test_case_key: str,
+                                            test_case: TestCaseUpdate):
     """Update a specific test case by its ID within the specified project."""
 
 
 @router.delete("/api/projects/{project_key}/test-cases/{test_case_key}",
                tags=[DB_COLLECTION_TC],
                status_code=status.HTTP_204_NO_CONTENT)
-async def delete_test_case_by_key(request: Request,
-                                  project_key: str,
-                                  test_case_key: str):
+async def delete_test_case_by_test_case_key(request: Request,
+                                            project_key: str,
+                                            test_case_key: str):
     """Delete a specific test case by its ID within the specified project."""

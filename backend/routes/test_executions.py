@@ -9,8 +9,8 @@
 
 from fastapi import APIRouter, Request, status
 
-from backend.orbit_def.orbit_def import DB_COLLECTION_TE
 from backend.models.test_executions import TestExecution, TestExecutionCreate, TestExecutionUpdate
+from backend.orbit_def.orbit_def import DB_COLLECTION_TE
 
 router = APIRouter()
 
@@ -18,10 +18,10 @@ router = APIRouter()
 @router.get("/api/projects/{project_key}/test-cases/{test_case_key}/executions",
             tags=[DB_COLLECTION_TE],
             response_model=list[TestExecution])
-async def list_executions_for_test_case(request: Request,
-                                        project_key: str,
-                                        test_case_key: str):
-    """List all test executions for a specific test case within a project."""
+async def get_all_executions_for_test_case(request: Request,
+                                           project_key: str,
+                                           test_case_key: str):
+    """Get all test executions for a specific test case within a project."""
 
 
 @router.post("/api/projects/{project_key}/test-cases/{test_case_key}/executions",

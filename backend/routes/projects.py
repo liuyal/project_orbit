@@ -21,7 +21,7 @@ router = APIRouter()
             tags=[DB_COLLECTION_PRJ],
             response_model=list[Project],
             status_code=status.HTTP_200_OK)
-async def list_projects(request: Request):
+async def get_all_projects(request: Request):
     """Endpoint to get projects"""
 
     db = request.app.state.db
@@ -37,8 +37,8 @@ async def list_projects(request: Request):
              tags=[DB_COLLECTION_PRJ],
              response_model=Project,
              status_code=status.HTTP_201_CREATED)
-async def create_project(request: Request,
-                         project: ProjectCreate):
+async def create_project_by_project_key(request: Request,
+                                        project: ProjectCreate):
     """Endpoint to create project."""
 
     current_time = get_current_utc_time()
@@ -82,8 +82,8 @@ async def create_project(request: Request,
             tags=[DB_COLLECTION_PRJ],
             response_model=Project,
             status_code=status.HTTP_200_OK)
-async def get_project(request: Request,
-                      project_key: str):
+async def get_project_by_project_key(request: Request,
+                                     project_key: str):
     """Endpoint to get project"""
 
     # Retrieve project from database
@@ -108,9 +108,9 @@ async def get_project(request: Request,
             tags=[DB_COLLECTION_PRJ],
             response_model=Project,
             status_code=status.HTTP_200_OK)
-async def update_project(request: Request,
-                         project_key: str,
-                         project_update: ProjectUpdate):
+async def update_project_by_project_key(request: Request,
+                                        project_key: str,
+                                        project_update: ProjectUpdate):
     """Endpoint to update project"""
 
     current_time = get_current_utc_time()
@@ -144,8 +144,8 @@ async def update_project(request: Request,
 @router.delete("/api/projects/{project_key}",
                tags=[DB_COLLECTION_PRJ],
                status_code=status.HTTP_204_NO_CONTENT)
-async def delete_project(request: Request,
-                         project_key: str):
+async def delete_project_by_project_key(request: Request,
+                                        project_key: str):
     """Endpoint to delete project"""
 
     # Delete the project from the database

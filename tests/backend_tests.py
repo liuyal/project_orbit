@@ -44,9 +44,20 @@ class OrbitBackendSanityTest(unittest.TestCase):
             response = requests.delete(f"{cls.url}/api/projects/{prj_key}")
             assert response.status_code == 204
 
+    @classmethod
+    def clean_up_test_cases(cls):
+        """ Clean up test cases after tests """
+
+        # Cleanup existing test cases
+        response = requests.get(f"{cls.url}/api/projects")
+        for item in response.json():
+            prj_key = item['project_key']
+            response = requests.delete(f"{cls.url}/api/projects/{prj_key}/test-cases/")
+            assert response.status_code == 204
+
     @pytest.mark.order(1)
-    def test_list_projects(self):
-        """ Test: List Projects - Expecting empty list """
+    def test_projects(self):
+        """ Test: Projects """
 
         logging.info(f"--- Starting test: {self._testMethodName} ---")
         self.__class__.clean_up_projects()
@@ -54,16 +65,6 @@ class OrbitBackendSanityTest(unittest.TestCase):
         response = requests.get(f"{self.__class__.url}/api/projects")
         assert response.status_code == 200
         assert response.json() == []
-
-        self.__class__.clean_up_projects()
-        logging.info(f"--- Test: {self._testMethodName} Complete ---")
-
-    @pytest.mark.order(2)
-    def test_create_projects(self):
-        """ Test: Create Projects """
-
-        logging.info(f"--- Starting test: {self._testMethodName} ---")
-        self.__class__.clean_up_projects()
 
         n = 3
         for i in range(0, n):
@@ -76,7 +77,17 @@ class OrbitBackendSanityTest(unittest.TestCase):
         assert response.status_code == 200
         assert len(response.json()) == n
 
-        #self.__class__.clean_up_projects()
+        # self.__class__.clean_up_projects()
+        logging.info(f"--- Test: {self._testMethodName} Complete ---")
+
+    @pytest.mark.order(2)
+    def test_test_cases(self):
+        """ Test: Test Cases """
+
+        logging.info(f"--- Starting test: {self._testMethodName} ---")
+        self.__class__.clean_up_test_cases()
+
+        # self.__class__.clean_up_projects()
         logging.info(f"--- Test: {self._testMethodName} Complete ---")
 
 

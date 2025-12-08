@@ -15,7 +15,7 @@ from backend.models.test_cycles import (
     TestCycleUpdate
 
 )
-from backend.orbit_def.orbit_def import DB_COLLECTION_TCY
+from backend.app_def.app_def import DB_COLLECTION_TCY
 from backend.routes.test_executions import TestExecution
 
 router = APIRouter()

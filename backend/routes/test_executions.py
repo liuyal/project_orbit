@@ -14,7 +14,7 @@ from backend.models.test_executions import (
     TestExecutionCreate,
     TestExecutionUpdate
 )
-from backend.orbit_def.orbit_def import DB_COLLECTION_TE
+from backend.app_def.app_def import DB_COLLECTION_TE
 
 router = APIRouter()
 

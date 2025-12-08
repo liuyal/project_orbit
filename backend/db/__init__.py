@@ -5,8 +5,3 @@
 # License: MIT
 # ================================================================
 
-DB_NAME = "orbit"
-DB_COLLECTION_PRJ = "projects"
-DB_COLLECTION_TC = "test-cases"
-DB_COLLECTION_TE = "test-executions"
-DB_COLLECTION_TCY = "test-cycles"

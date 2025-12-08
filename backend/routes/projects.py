@@ -12,17 +12,16 @@ import json
 from fastapi import APIRouter, Request, status, Response
 from starlette.responses import JSONResponse
 
+from backend.app_def.app_def import DB_COLLECTION_PRJ
 from backend.models.projects import (
     Project,
     ProjectCreate,
     ProjectUpdate
 )
-from backend.orbit_def.orbit_def import DB_COLLECTION_PRJ
 from backend.routes.test_cases import (
     get_all_test_cases_by_project
 )
 from backend.tools.tools import (
-    convert_objectid,
     get_current_utc_time
 )
 
@@ -37,9 +36,7 @@ async def get_all_projects(request: Request):
     """Endpoint to get projects"""
 
     db = request.app.state.db
-    projects_cursor = db[DB_COLLECTION_PRJ].find({})
-    projects = await projects_cursor.to_list()
-    projects = [convert_objectid(p) for p in projects]
+    projects = await db.find(DB_COLLECTION_PRJ, {})
 
     return JSONResponse(status_code=status.HTTP_200_OK,
                         content=projects)
@@ -60,7 +57,8 @@ async def create_project_by_project_key(request: Request,
 
     # Check if project_key already exists
     db = request.app.state.db
-    result = await db[DB_COLLECTION_PRJ].find_one(
+    result = await db.find_one(
+        DB_COLLECTION_PRJ,
         {"project_key": request_data["project_key"]})
 
     if result is not None:
@@ -76,15 +74,15 @@ async def create_project_by_project_key(request: Request,
     request_data["created_at"] = current_time
     request_data["updated_at"] = current_time
 
-    # Assign _id for MongoDB
+    # Assign _id
     db_insert = Project(**request_data).model_dump()
     db_insert["_id"] = request_data["project_key"]
-    await db[DB_COLLECTION_PRJ].insert_one(db_insert)
+    await db.create(DB_COLLECTION_PRJ, db_insert)
 
     # Retrieve the updated project
-    created_project = await db[DB_COLLECTION_PRJ].find_one(
+    created_project = await db.find_one(
+        DB_COLLECTION_PRJ,
         {"project_key": request_data["project_key"]})
-    created_project = convert_objectid(created_project)
 
     return JSONResponse(status_code=status.HTTP_201_CREATED,
                         content=created_project)
@@ -100,7 +98,8 @@ async def get_project_by_project_key(request: Request,
 
     # Retrieve project from database
     db = request.app.state.db
-    result = await db[DB_COLLECTION_PRJ].find_one(
+    result = await db.find_one(
+        DB_COLLECTION_PRJ,
         {"project_key": project_key})
 
     if result is None:
@@ -111,7 +110,6 @@ async def get_project_by_project_key(request: Request,
                                               f"not found."})
     else:
         # Convert ObjectId to string
-        result = convert_objectid(result)
         return JSONResponse(status_code=status.HTTP_200_OK,
                             content=result)
 
@@ -134,20 +132,20 @@ async def update_project_by_project_key(request: Request,
 
     # Update the project in the database
     db = request.app.state.db
-    result = await db[DB_COLLECTION_PRJ].update_one(
-        {"project_key": project_key},
-        {"$set": request_data})
+    result, matched_count = await db.update(DB_COLLECTION_PRJ,
+                                            {"project_key": project_key},
+                                            {"$set": request_data})
 
-    if result.matched_count == 0:
+    if matched_count == 0:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
-                            content={"error": f"Project "
-                                              f"{project_key} "
-                                              f"not found."})
+                            content={"error": f"Project {project_key} "
+                                              f"not found"})
 
     # Retrieve the updated project
-    updated_project = await db[DB_COLLECTION_PRJ].find_one(
-        {"project_key": project_key})
-    updated_project = convert_objectid(updated_project)
+    updated_project = await db.find_one(DB_COLLECTION_PRJ,
+                                        {"project_key": project_key})
+
+    updated = set(request_data.items()).issubset(set(updated_project.items()))
 
     return JSONResponse(status_code=status.HTTP_200_OK,
                         content=updated_project)
@@ -174,8 +172,8 @@ async def delete_project_by_project_key(request: Request,
     # TODO: add check for not existing test-executions, test-cycles linked
 
     # Delete the project from the database
-    result = await db[DB_COLLECTION_PRJ].delete_one(
-        {"project_key": project_key})
+    result, deleted_count = await db.delete(DB_COLLECTION_PRJ,
+                                            {"project_key": project_key})
 
     if result.deleted_count == 0:
         # Project not found
@@ -199,10 +197,10 @@ async def force_delete_project_by_project_key(request: Request,
     # TODO: delete the linked test-cases, test-executions, test-cycles
 
     # Delete the project from the database
-    result = await db[DB_COLLECTION_PRJ].delete_one(
-        {"project_key": project_key})
+    result, deleted_count = await db.delete(DB_COLLECTION_PRJ,
+                                            {"project_key": project_key})
 
-    if result.deleted_count == 0:
+    if deleted_count == 0:
         # Project not found
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
                             content={"error": f"Project "

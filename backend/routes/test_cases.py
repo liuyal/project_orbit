@@ -10,9 +10,9 @@
 from fastapi import APIRouter, Request, status, Response
 from starlette.responses import JSONResponse
 
+from backend.app_def.app_def import DB_COLLECTION_PRJ, DB_COLLECTION_TC
 from backend.models.test_cases import TestCase, TestCaseCreate, TestCaseUpdate
-from backend.orbit_def.orbit_def import DB_COLLECTION_PRJ, DB_COLLECTION_TC
-from backend.tools.tools import convert_objectid, get_current_utc_time
+from backend.tools.tools import get_current_utc_time
 
 router = APIRouter()
 
@@ -25,9 +25,7 @@ async def get_all_test_cases(request: Request):
 
     # Retrieve all test cases from database
     db = request.app.state.db
-    tc_cursor = db[DB_COLLECTION_TC].find({})
-    test_cases = await tc_cursor.to_list()
-    test_cases = [convert_objectid(p) for p in test_cases]
+    test_cases = await db.find(DB_COLLECTION_TC, {})
 
     return JSONResponse(status_code=status.HTTP_200_OK,
                         content=test_cases)
@@ -40,11 +38,9 @@ async def get_all_test_cases_by_project(request: Request,
                                         project_key: str):
     """Get all test cases in the specified project."""
 
-    # Retrieve test cases from database matching project_key
     db = request.app.state.db
-    tc_cursor = db[DB_COLLECTION_TC].find({})
-    test_cases = await tc_cursor.to_list()
-    test_cases = [convert_objectid(p) for p in test_cases]
+    test_cases = await db.find(DB_COLLECTION_TC,
+                               {"project_key": project_key})
 
     return JSONResponse(status_code=status.HTTP_200_OK,
                         content=test_cases)
@@ -65,8 +61,8 @@ async def create_test_case_by_project(request: Request,
 
     # Check if test_case_key already exists
     db = request.app.state.db
-    result = await db[DB_COLLECTION_TC].find_one(
-        {"test_case_key": request_data["test_case_key"]})
+    result = await db.find_one(DB_COLLECTION_TC,
+                               {"test_case_key": request_data["test_case_key"]})
 
     if result is not None:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
@@ -75,8 +71,8 @@ async def create_test_case_by_project(request: Request,
                                               f"already exists."})
 
     # Check if project_key exists
-    result = await db[DB_COLLECTION_PRJ].find_one(
-        {"project_key": request_data["project_key"]})
+    result = await db.find_one(DB_COLLECTION_PRJ,
+                               {"project_key": request_data["project_key"]})
 
     if result is None:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
@@ -89,10 +85,10 @@ async def create_test_case_by_project(request: Request,
     request_data["created_at"] = current_time
     request_data["updated_at"] = current_time
 
-    # Assign _id for MongoDB
+    # Assign _id
     db_insert = TestCase(**request_data).model_dump()
     db_insert["_id"] = request_data["test_case_key"]
-    await db[DB_COLLECTION_TC].insert_one(db_insert)
+    await db.create(DB_COLLECTION_TC, db_insert)
 
     return Response(status_code=status.HTTP_201_CREATED)
 
@@ -106,8 +102,8 @@ async def delete_all_test_case_by_project(request: Request,
 
     # Delete test cases from database matching project_key
     db = request.app.state.db
-    await db[DB_COLLECTION_TC].delete_many(
-        {"project_key": project_key})
+    await db.delete(DB_COLLECTION_TC,
+                    {"project_key": project_key})
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -122,9 +118,9 @@ async def get_test_case_by_test_case_key(request: Request,
 
     # Retrieve test case from database
     db = request.app.state.db
-    result = await db[DB_COLLECTION_TC].find_one(
-        {"test_case_key": test_case_key,
-         "project_key": project_key})
+    result = await db.find_one(DB_COLLECTION_TC,
+                               {"test_case_key": test_case_key,
+                                "project_key": project_key})
 
     if result is None:
         # test case not found
@@ -133,8 +129,6 @@ async def get_test_case_by_test_case_key(request: Request,
                                               f"{test_case_key} "
                                               f"not found."})
     else:
-        # Convert ObjectId to string
-        result = convert_objectid(result)
         return JSONResponse(status_code=status.HTTP_200_OK,
                             content=result)
 
@@ -157,23 +151,21 @@ async def update_test_case_by_test_case_key(request: Request,
 
     # Update the project in the database
     db = request.app.state.db
-    result = await db[DB_COLLECTION_TC].update_one(
-        {"test_case_key": test_case_key,
-         "project_key": project_key},
-        {"$set": request_data}
-    )
+    result, matched_count = await db.update(DB_COLLECTION_TC,
+                                            {"test_case_key": test_case_key,
+                                             "project_key": project_key},
+                                            {"$set": request_data})
 
-    if result.matched_count == 0:
+    if matched_count == 0:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
                             content={"error": f"Test case "
                                               f"{test_case_key} "
                                               f"not found."})
 
     # Retrieve the updated test case
-    updated_test_case = await db[DB_COLLECTION_TC].find_one(
-        {"test_case_key": test_case_key,
-         "project_key": project_key})
-    updated_test_case = convert_objectid(updated_test_case)
+    updated_test_case = await db.find_one(DB_COLLECTION_TC,
+                                          {"test_case_key": test_case_key,
+                                           "project_key": project_key})
 
     return JSONResponse(status_code=status.HTTP_200_OK,
                         content=updated_test_case)
@@ -189,11 +181,11 @@ async def delete_test_case_by_test_case_key(request: Request,
 
     # Delete the project from the database
     db = request.app.state.db
-    result = await db[DB_COLLECTION_TC].delete_one(
-        {"test_case_key": test_case_key,
-         "project_key": project_key})
+    result, deleted_count = await db.delete_one(DB_COLLECTION_TC,
+                                                {"test_case_key": test_case_key,
+                                                 "project_key": project_key})
 
-    if result.deleted_count == 0:
+    if deleted_count == 0:
         # Test case not found
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
                             content={"error": f"Test case "

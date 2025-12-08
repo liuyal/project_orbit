@@ -16,8 +16,9 @@ import uvicorn
 import yaml
 from fastapi import FastAPI
 
-from db import get_db_client, DB_COLLECTIONS
-from orbit_def.orbit_def import DB_NAME
+from backend.db.db import DBType
+from db.mongodb import MongoClient
+from db.sqlite import SqliteClient
 from routes import routers
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,14 @@ def build_parser():
         help='Set server listening port (default: 8000)'
     )
     parser.add_argument(
+        '--db',
+        dest='db_type',
+        type=lambda x: DBType(x),
+        choices=[DBType.MONGODB, DBType.SQLITE],
+        default=DBType.MONGODB,
+        help='Set database type, choices: mongodb, sqlite. (default: mongodb)'
+    )
+    parser.add_argument(
         '--debug',
         dest='debug',
         action='store_true',
@@ -54,28 +63,19 @@ def build_parser():
 async def lifespan(app):
     """ Lifespan context manager to handle startup and shutdown events. """
 
-    client = get_db_client()
+    if args.db_type == DBType.MONGODB:
+        client = MongoClient()
 
-    # Drop the database if in debug mode
-    if args.debug:
-        await client.drop_database(DB_NAME)
+    else:
+        client = SqliteClient()
 
-    # Initialize the database
-    if DB_NAME not in await client.list_database_names():
-        await client[DB_NAME].drop_collection("init")
-        await client[DB_NAME].create_collection("init")
-
-    # Initialize required collections
-    collections = await client[DB_NAME].list_collection_names()
-    for collection, schema in DB_COLLECTIONS:
-        if collection not in collections:
-            await client[DB_NAME].create_collection(collection,
-                                                    validator={"$jsonSchema": schema})
+    await client.connect()
+    await client.configure()
 
     # Attach the database client to the app state
-    app.state.db = client[DB_NAME]
+    app.state.db = client
     yield
-    client.close()
+    await client.close()
 
 
 def configure_logging_file(debug: bool = False) -> str:

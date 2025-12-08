@@ -11,7 +11,7 @@ from fastapi import APIRouter, Request, status
 from pydantic import BaseModel
 
 from backend.models.test_executions import TestExecution
-from backend.orbit_def.orbit_def import DB_COLLECTION_TCY
+from backend.app_def.app_def import DB_COLLECTION_TCY
 
 router = APIRouter()
 

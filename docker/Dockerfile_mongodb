@@ -2,7 +2,7 @@
 FROM mongo:latest
 
 # Maintainer information
-LABEL maintainer="jerrylarryliu@gmail.com"
+LABEL maintainer="jerry"
 
 # Optional: Set environment variables for initial user creation (for development/testing)
 # These variables are only effective when the data directory is empty on container startup.

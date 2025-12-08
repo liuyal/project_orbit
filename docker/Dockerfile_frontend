@@ -1,7 +1,7 @@
 # Stage 1: Build the Angular application
 FROM node:alpine AS build
 
-LABEL maintainer="jerrylarryliu@gmail.com"
+LABEL maintainer="jerry"
 WORKDIR /home
 
 COPY package.json package-lock.json ./

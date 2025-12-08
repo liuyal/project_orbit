@@ -8,13 +8,14 @@
 # routes/execution.py
 
 from fastapi import APIRouter, Request, status
+from starlette.responses import JSONResponse
 
+from backend.app_def.app_def import DB_COLLECTION_TE
 from backend.models.test_executions import (
     TestExecution,
     TestExecutionCreate,
     TestExecutionUpdate
 )
-from backend.app_def.app_def import DB_COLLECTION_TE
 
 router = APIRouter()
 
@@ -26,6 +27,13 @@ async def get_all_executions_for_test_case(request: Request,
                                            project_key: str,
                                            test_case_key: str):
     """Get all test executions for a specific test case within a project."""
+
+    db = request.app.state.db
+    test_executions = await db.find(DB_COLLECTION_TE, {"project_key": project_key,
+                                                       "test_case_key": test_case_key})
+
+    return JSONResponse(status_code=status.HTTP_200_OK,
+                        content=test_executions)
 
 
 @router.post("/api/projects/{project_key}/test-cases/{test_case_key}/executions",

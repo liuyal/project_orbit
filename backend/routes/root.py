@@ -8,7 +8,8 @@
 # routes/root.py
 
 import logging
-from fastapi import APIRouter, Request
+
+from fastapi import APIRouter, Request, status, Response
 from fastapi.responses import RedirectResponse
 
 router = APIRouter()
@@ -27,3 +28,11 @@ async def root(request: Request):
     return RedirectResponse(url="/docs")
 
 
+@router.post("/api/reset", tags=["root"])
+async def reset_server(request: Request):
+    """ Root endpoint to reset server. """
+
+    db = request.app.state.db
+    await db.configure(clean_db=True)
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

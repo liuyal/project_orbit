@@ -59,6 +59,13 @@ async def create_test_case_by_project(request: Request,
     # Prepare request data
     request_data = test_case.model_dump()
 
+    # Validate that test_case_key starts with project_key
+    if not request_data["test_case_key"].startswith(project_key):
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"error": f"test_case_key {request_data["test_case_key"]} "
+                                              f"does not start with "
+                                              f"project_key {project_key}"})
+
     # Check if test_case_key already exists
     db = request.app.state.db
     result = await db.find_one(DB_COLLECTION_TC,
@@ -102,8 +109,15 @@ async def delete_all_test_case_by_project(request: Request,
 
     # Delete test cases from database matching project_key
     db = request.app.state.db
-    await db.delete(DB_COLLECTION_TC,
-                    {"project_key": project_key})
+
+    result, deleted_count = await db.delete(DB_COLLECTION_TC,
+                                            {"project_key": project_key})
+
+    if deleted_count == 0:
+        # Test case not found
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"error": f"Failed to delete test cases "
+                                              f"for project {project_key}"})
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

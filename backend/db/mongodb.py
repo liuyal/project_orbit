@@ -59,6 +59,14 @@ def pydantic_to_mongo_jsonschema(pydantic_schema: dict):
         # Determine bsonType(s)
         bson_types = set()
 
+        # Handle dict[str, str] (Pydantic v2: type == 'object' and 'properties' is empty and 'additionalProperties' is string)
+        if field.get("type") == "object" and not field.get("properties") and field.get("additionalProperties", {}).get("type") == "string":
+            props["_id" if name == "id" else name] = {
+                "bsonType": "object",
+                "additionalProperties": {"bsonType": "string"}
+            }
+            continue
+
         # Handle Pydantic's 'anyOf' for Optionals
         if "anyOf" in field:
             for option in field["anyOf"]:
@@ -231,9 +239,8 @@ class MongoClient(DatabaseClient):
                      update_data: dict) -> tuple:
         """Update records in the database."""
 
-        result = await self._db_client[self._db_name][table].update(query,
-                                                                    update_data)
-
+        result = await self._db_client[self._db_name][table].update_many(query,
+                                                                         {"$set": update_data})
         return result, result.matched_count
 
     async def delete(self,

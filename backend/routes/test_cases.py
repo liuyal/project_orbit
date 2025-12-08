@@ -70,7 +70,6 @@ async def create_test_case_by_project(request: Request,
     db = request.app.state.db
     result = await db.find_one(DB_COLLECTION_TC,
                                {"test_case_key": request_data["test_case_key"]})
-
     if result is not None:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
                             content={"error": f"test case "
@@ -80,7 +79,6 @@ async def create_test_case_by_project(request: Request,
     # Check if project_key exists
     result = await db.find_one(DB_COLLECTION_PRJ,
                                {"project_key": request_data["project_key"]})
-
     if result is None:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
                             content={"error": f"Project "

@@ -7,10 +7,13 @@
 
 # routes/execution.py
 
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, Request, status, Response
 from starlette.responses import JSONResponse
 
-from backend.app_def.app_def import DB_COLLECTION_TE
+from backend.app_def.app_def import (
+    DB_COLLECTION_TE,
+    DB_COLLECTION_TC
+)
 from backend.models.test_executions import (
     TestExecution,
     TestExecutionCreate,
@@ -45,6 +48,53 @@ async def create_execution_for_test_case(request: Request,
                                          test_case_key: str,
                                          execution: TestExecutionCreate):
     """Create a new test execution for a specific test case within a project."""
+
+    # Prepare request data
+    request_data = execution.model_dump()
+
+    # Validate test_case_key starts with project_key
+    if not test_case_key.startswith(project_key):
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"error": f"test_case_key {test_case_key} "
+                                              f"does not start with "
+                                              f"project_key {project_key}"})
+
+    # Validate execution_key starts with project_key
+    if not request_data["execution_key"].startswith(project_key):
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"error": f"execution_key {request_data["execution_key"]} "
+                                              f"does not start with "
+                                              f"project_key {project_key}"})
+
+    # Check if execution_key already exists
+    db = request.app.state.db
+    result = await db.find_one(DB_COLLECTION_TE,
+                               {"execution_key": request_data["execution_key"]})
+    if result is not None:
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"error": f"execution_key "
+                                              f"{request_data["execution_key"]} "
+                                              f"already exists."})
+
+    # Initialize missing keys
+    request_data["project_key"] = project_key
+    request_data["test_case_key"] = test_case_key
+
+    # Check if test_case_key exists
+    result = await db.find_one(DB_COLLECTION_TC,
+                               {"test_case_key": test_case_key})
+    if result is None:
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"error": f"test case "
+                                              f"{test_case_key} "
+                                              f"does not exists."})
+
+    # Assign _id
+    db_insert = TestExecution(**request_data).model_dump()
+    db_insert["_id"] = test_case_key
+    await db.create(DB_COLLECTION_TE, db_insert)
+
+    return Response(status_code=status.HTTP_201_CREATED)
 
 
 @router.delete("/api/projects/{project_key}/test-cases/{test_case_key}/executions",

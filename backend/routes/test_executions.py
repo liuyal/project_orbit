@@ -91,7 +91,7 @@ async def create_execution_for_test_case(request: Request,
 
     # Assign _id
     db_insert = TestExecution(**request_data).model_dump()
-    db_insert["_id"] = test_case_key
+    db_insert["_id"] = request_data["execution_key"]
     await db.create(DB_COLLECTION_TE, db_insert)
 
     return Response(status_code=status.HTTP_201_CREATED)
@@ -105,6 +105,19 @@ async def delete_all_execution_for_test_case(request: Request,
                                              test_case_key: str):
     """Delete all test executions for a specific test case within a project."""
 
+    # delete all test executions for the specified test case
+    db = request.app.state.db
+    result, deleted_count = await db.delete(DB_COLLECTION_TE,
+                                            {"project_key": project_key,
+                                             "test_case_key": test_case_key})
+    if deleted_count == 0:
+        # Test case has no executions
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"error": f"No test executions found "
+                                              f"for test case {test_case_key}"})
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
 @router.get("/api/executions/{execution_key}",
             tags=[DB_COLLECTION_TE],
@@ -112,6 +125,20 @@ async def delete_all_execution_for_test_case(request: Request,
 async def get_execution(request: Request,
                         execution_key: str):
     """Retrieve a specific test execution by its ID."""
+
+    # Retrieve test execution from database
+    db = request.app.state.db
+    test_execution = await db.find_one(DB_COLLECTION_TE,
+                                       {"execution_key": execution_key})
+    if test_execution is None:
+        # test execution not found
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
+                            content={"error": f"Test execution "
+                                              f"{execution_key} "
+                                              f"not found."})
+
+    return JSONResponse(status_code=status.HTTP_200_OK,
+                        content=test_execution)
 
 
 @router.put("/api/executions/{execution_key}",
@@ -122,6 +149,28 @@ async def update_execution(request: Request,
                            execution: TestExecutionUpdate):
     """Update a specific test execution by its ID."""
 
+    # Prepare request data, excluding None values
+    request_data = execution.model_dump()
+    request_data = {k: v for k, v in request_data.items() if v is not None}
+
+    # Update the project in the database
+    db = request.app.state.db
+    result, matched_count = await db.update(DB_COLLECTION_TE,
+                                            {"execution_key": execution_key},
+                                            request_data)
+    if matched_count == 0:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
+                            content={"error": f"Test execution "
+                                              f"{execution_key} "
+                                              f"not found."})
+
+    # Retrieve the updated test case
+    updated_test_execution = await db.find_one(DB_COLLECTION_TE,
+                                               {"execution_key": execution_key})
+
+    return JSONResponse(status_code=status.HTTP_200_OK,
+                        content=updated_test_execution)
+
 
 @router.delete("/api/executions/{execution_key}",
                tags=[DB_COLLECTION_TE],
@@ -129,3 +178,16 @@ async def update_execution(request: Request,
 async def delete_execution(request: Request,
                            execution_key: str):
     """Delete a specific test execution by its ID."""
+
+    # Delete the project from the database
+    db = request.app.state.db
+    result, deleted_count = await db.delete_one(DB_COLLECTION_TE,
+                                                {"execution_key": execution_key})
+    if deleted_count == 0:
+        # Test execution not found
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
+                            content={"error": f"Test execution "
+                                              f"{execution_key} "
+                                              f"not found."})
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

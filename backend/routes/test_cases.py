@@ -107,10 +107,8 @@ async def delete_all_test_case_by_project(request: Request,
 
     # Delete test cases from database matching project_key
     db = request.app.state.db
-
     result, deleted_count = await db.delete(DB_COLLECTION_TC,
                                             {"project_key": project_key})
-
     if deleted_count == 0:
         # Test case not found
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
@@ -133,7 +131,6 @@ async def get_test_case_by_test_case_key(request: Request,
     result = await db.find_one(DB_COLLECTION_TC,
                                {"test_case_key": test_case_key,
                                 "project_key": project_key})
-
     if result is None:
         # test case not found
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
@@ -167,7 +164,6 @@ async def update_test_case_by_test_case_key(request: Request,
                                             {"test_case_key": test_case_key,
                                              "project_key": project_key},
                                             {"$set": request_data})
-
     if matched_count == 0:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
                             content={"error": f"Test case "
@@ -196,7 +192,6 @@ async def delete_test_case_by_test_case_key(request: Request,
     result, deleted_count = await db.delete_one(DB_COLLECTION_TC,
                                                 {"test_case_key": test_case_key,
                                                  "project_key": project_key})
-
     if deleted_count == 0:
         # Test case not found
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,

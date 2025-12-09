@@ -24,7 +24,8 @@ class TestCase(BaseModel):
     updated_at: str | None
     status: str | None
     priority: str | None
-    test_scripts: str | None
+    test_script: str | None
+    test_script_type: str | None
     last_result: str | None
     last_execution_key: str | None
     test_frequency: list[str] | None
@@ -40,7 +41,8 @@ class TestCaseCreate(BaseModel):
     folder: str = None
     status: str = None
     priority: str = None
-    test_scripts: str = None
+    test_script: str = None
+    test_script_type: str = None
     last_result: str = None
     last_execution_key: str = None
     test_frequency: list[str] = None
@@ -54,7 +56,8 @@ class TestCaseUpdate(BaseModel):
     folder: str = None
     status: str = None
     priority: str = None
-    test_scripts: str = None
+    test_script: str = None
+    test_script_type: str = None
     last_result: str = None
     last_execution_key: str = None
     test_frequency: list[str] = None

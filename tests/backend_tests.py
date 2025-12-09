@@ -140,8 +140,6 @@ class OrbitBackendSanityTest(unittest.TestCase):
         logging.info(f"--- Starting test: {self._testMethodName} ---")
         self.__class__.clean_up_db()
 
-
-
         n = 2
         for i in range(0, n):
             payload = {"project_key": f"PRJ{i}", "description": f"Project #{i}"}
@@ -170,8 +168,32 @@ class OrbitBackendSanityTest(unittest.TestCase):
         assert response.status_code == 200
         assert len(response.json()) == n * 2
 
+        n = 5
+        project_key = "PRJ0"
+        test_case_key = f"{project_key}-T0"
+        for i in range(0, n):
+            payload = {"execution_key": f"{project_key}-E{i}"}
+            response = requests.post(f"{self.__class__.url}/api/projects/{project_key}/test-cases/{test_case_key}/executions", json=payload)
+            assert response.status_code == 201
+        response = requests.get(f"{self.__class__.url}/api/projects/{project_key}/test-cases/{test_case_key}/executions")
+        assert response.status_code == 200
+        assert len(response.json()) == n
+
+        n = 5
+        project_key = "PRJ0"
+        test_case_key = f"{project_key}-T1"
+        for i in range(n, n * 2):
+            payload = {"execution_key": f"{project_key}-E{i}"}
+            response = requests.post(f"{self.__class__.url}/api/projects/{project_key}/test-cases/{test_case_key}/executions", json=payload)
+            assert response.status_code == 201
+        response = requests.get(f"{self.__class__.url}/api/projects/{project_key}/test-cases/{test_case_key}/executions")
+        print(response.content)
+        assert response.status_code == 200
+        assert len(response.json()) == n
+
         # self.__class__.clean_up_db()
         logging.info(f"--- Test: {self._testMethodName} Complete ---")
+
 
 if __name__ == "__main__":
     unittest.main()

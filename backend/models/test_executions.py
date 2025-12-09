@@ -41,7 +41,6 @@ class TestExecutionCreate(BaseModel):
 
 
 class TestExecutionUpdate(BaseModel):
-    execution_key: str
     test_cycle_key: str = None
     result: str = None
     custom_fields: dict[str, str] = None

@@ -62,9 +62,9 @@ async def create_test_case_by_project(request: Request,
     # Validate that test_case_key starts with project_key
     if not request_data["test_case_key"].startswith(project_key):
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
-                            content={"error": f"test_case_key {request_data["test_case_key"]} "
-                                              f"does not start with "
-                                              f"project_key {project_key}"})
+                            content={"error": f"Mismatch test_case_key "
+                                              f"{request_data["test_case_key"]} "
+                                              f"with project_key {project_key}"})
 
     # Check if test_case_key already exists
     db = request.app.state.db
@@ -187,7 +187,7 @@ async def delete_test_case_by_test_case_key(request: Request,
                                             test_case_key: str):
     """Delete a specific test case by its ID within the specified project."""
 
-    # Delete the project from the database
+    # Delete the test case from project from the database
     db = request.app.state.db
     result, deleted_count = await db.delete_one(DB_COLLECTION_TC,
                                                 {"test_case_key": test_case_key,

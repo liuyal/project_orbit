@@ -21,6 +21,8 @@ from backend.app_def.app_def import (
     DB_COLLECTION_TCY
 )
 from backend.db.db import DatabaseClient, DBType, DBMode
+
+
 # from backend.models.projects import Project
 # from backend.models.test_cases import TestCase
 # from backend.models.test_cycles import TestCycle
@@ -127,16 +129,11 @@ def pydantic_to_mongo_jsonschema(pydantic_schema: dict):
     }
 
 
-# PROJECT_SCHEMA = pydantic_to_mongo_jsonschema(Project.model_json_schema())
-# TEST_CASE_SCHEMA = pydantic_to_mongo_jsonschema(TestCase.model_json_schema())
-# TEST_EXECUTION_SCHEMA = pydantic_to_mongo_jsonschema(TestExecution.model_json_schema())
-# TEST_CYCLE_SCHEMA = pydantic_to_mongo_jsonschema(TestCycle.model_json_schema())
-
 DB_COLLECTIONS = [
-    (DB_COLLECTION_PRJ, None),
-    (DB_COLLECTION_TC, None),
-    (DB_COLLECTION_TE, None),
-    (DB_COLLECTION_TCY, None)
+    DB_COLLECTION_PRJ,
+    DB_COLLECTION_TC,
+    DB_COLLECTION_TE,
+    DB_COLLECTION_TCY
 ]
 
 MONGODB_HOST = os.getenv("MONGODB_HOST", "localhost")
@@ -200,10 +197,9 @@ class MongoClient(DatabaseClient):
 
         # Initialize required collections
         collections = await self._db_client[self._db_name].list_collection_names()
-        for collection, schema in DB_COLLECTIONS:
+        for collection in DB_COLLECTIONS:
             if collection not in collections:
-                await self._db_client[self._db_name].create_collection(collection,
-                                                                       validator={"$jsonSchema": schema})
+                await self._db_client[self._db_name].create_collection(collection)
 
     async def create(self,
                      table: str,

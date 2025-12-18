@@ -18,8 +18,8 @@ def build_parser():
     parser.add_argument(
         '--host',
         dest='host',
-        default='127.0.0.1',
-        help='Set server host (default:127.0.0.1)'
+        default='0.0.0.0',
+        help='Set server host (default:0.0.0.0)'
     )
     parser.add_argument(
         '-p', '--port',

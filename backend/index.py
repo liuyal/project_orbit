@@ -13,7 +13,6 @@ args = parser.parse_args()
 
 import logging.config
 import os
-import sys
 import pathlib
 from contextlib import asynccontextmanager
 
@@ -22,11 +21,9 @@ import yaml
 from fastapi import FastAPI
 
 from backend.db.db import DBType
-from db.mongodb import MongoClient
-from db.sqlite import SqliteClient
-from routes import routers
-
-sys.path.append(str(pathlib.Path(__file__).parent))
+from backend.db.mongodb import MongoClient
+from backend.db.sqlite import SqliteClient
+from backend.routes import routers
 
 logger = logging.getLogger(__name__)
 
@@ -87,5 +84,5 @@ if __name__ == "__main__":
     uvicorn.run("index:app",
                 host=args.host,
                 port=int(args.port),
-                reload=False,  # args.debug,
+                reload=args.debug,
                 log_config=log_conf)

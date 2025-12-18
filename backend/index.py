@@ -50,8 +50,8 @@ async def lifespan(app):
 def configure_logging_file(debug: bool = False) -> str:
     """ Configure logging from file. """
 
-    tmp_path = os.getenv("TEMP", str(pathlib.Path(__file__).parent / 'tmp'))
-    tmp_path = pathlib.Path(tmp_path)
+    tmp_path = pathlib.Path(__file__).parent / 'tmp'
+    tmp_path.mkdir(parents=True, exist_ok=True)
 
     with open(pathlib.Path(__file__).parent / 'log_conf.yaml', 'r') as f:
         conf_text = f.read()
@@ -80,9 +80,9 @@ for router in routers:
     app.include_router(router)
 
 if __name__ == "__main__":
-    #log_conf = configure_logging_file(args.debug)
+    log_conf = configure_logging_file(args.debug)
     uvicorn.run("index:app",
                 host=args.host,
                 port=int(args.port),
                 reload=args.debug,
-                log_config=None)
+                log_config=log_conf)

@@ -15,20 +15,20 @@ from backend.app_def.app_def import (
     DB_COLLECTION_TCY
 )
 from backend.db.db import DatabaseClient, DBType, DBMode
-from backend.models.projects import Project
-from backend.models.test_cases import TestCase
-from backend.models.test_cycles import TestCycle
-from backend.models.test_executions import TestExecution
+# from backend.models.projects import Project
+# from backend.models.test_cases import TestCase
+# from backend.models.test_cycles import TestCycle
+# from backend.models.test_executions import TestExecution
 
-PROJECT_SCHEMA = Project.model_json_schema()
-TEST_CASE_SCHEMA = TestCase.model_json_schema()
-TEST_EXECUTION_SCHEMA = TestExecution.model_json_schema()
-TEST_CYCLE_SCHEMA = TestCycle.model_json_schema()
+# PROJECT_SCHEMA = Project.model_json_schema()
+# TEST_CASE_SCHEMA = TestCase.model_json_schema()
+# TEST_EXECUTION_SCHEMA = TestExecution.model_json_schema()
+# TEST_CYCLE_SCHEMA = TestCycle.model_json_schema()
 
-DB_COLLECTIONS = [(DB_COLLECTION_PRJ, PROJECT_SCHEMA),
-                  (DB_COLLECTION_TC, TEST_CASE_SCHEMA),
-                  (DB_COLLECTION_TE, TEST_EXECUTION_SCHEMA),
-                  (DB_COLLECTION_TCY, TEST_CYCLE_SCHEMA)]
+DB_COLLECTIONS = [(DB_COLLECTION_PRJ, None),
+                  (DB_COLLECTION_TC, None),
+                  (DB_COLLECTION_TE, None),
+                  (DB_COLLECTION_TCY, None)]
 
 SQLITE_URL = f""
 

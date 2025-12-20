@@ -7,8 +7,6 @@
 
 # routes/projects.py
 
-import json
-
 from fastapi import (
     APIRouter,
     Request,
@@ -22,9 +20,6 @@ from backend.models.projects import (
     Project,
     ProjectCreate,
     ProjectUpdate
-)
-from backend.routes.test_cases import (
-    get_all_test_cases_by_project
 )
 from backend.tools.tools import (
     get_current_utc_time
@@ -165,12 +160,15 @@ async def delete_project_by_key(request: Request,
 
     if force["force"] is False:
         # TODO: add check for not existing test-executions, test-cycles linked
-        response = await get_all_test_cases_by_project(request, project_key)
-        if len(json.loads(response.body.decode())) > 0:
-            # There are linked test-cases, cannot delete project
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content={"error": f"Project {project_key} has linked test-cases"})
+        pass
+
+        # from backend.routes.test_cases import get_all_test_cases_by_project
+        # response = await get_all_test_cases_by_project(request, project_key)
+        # if len(json.loads(response.body.decode())) > 0:
+        #     # There are linked test-cases, cannot delete project
+        #     return JSONResponse(
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #         content={"error": f"Project {project_key} has linked test-cases"})
 
     else:
         # TODO: Delete all test-cases, executions, cycles linked to project

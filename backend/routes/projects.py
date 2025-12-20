@@ -132,7 +132,7 @@ async def update_project_by_key(request: Request,
     db = request.app.state.db
     await db.update(DB_COLLECTION_PRJ,
                     {"project_key": project_key},
-                    {"$set": request_data})
+                    request_data)
 
     # Retrieve the updated project
     updated_project = await db.find_one(DB_COLLECTION_PRJ,

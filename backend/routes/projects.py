@@ -147,7 +147,7 @@ async def update_project_by_key(request: Request,
                status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project_by_key(request: Request,
                                 project_key: str,
-                                force: dict):
+                                force: dict = None):
     """Endpoint to delete project"""
 
     # Check project exists
@@ -158,7 +158,7 @@ async def delete_project_by_key(request: Request,
     # Get all test-cases for the project
     db = request.app.state.db
 
-    if force["force"] is False:
+    if force and force["force"] is False:
         # TODO: add check for not existing test-executions, test-cycles linked
         pass
 

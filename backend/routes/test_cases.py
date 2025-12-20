@@ -197,7 +197,7 @@ async def update_test_case_by_key(request: Request,
     await db.update(DB_COLLECTION_TC,
                     {"test_case_key": test_case_key,
                      "project_key": project_key},
-                    {"$set": request_data})
+                    request_data)
 
     # Retrieve the updated test case
     updated_test_case = await db.find_one(DB_COLLECTION_TC,

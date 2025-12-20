@@ -9,7 +9,12 @@
 
 import json
 
-from fastapi import APIRouter, Request, status, Response
+from fastapi import (
+    APIRouter,
+    Request,
+    status,
+    Response
+)
 from starlette.responses import JSONResponse
 
 from backend.app_def.app_def import DB_COLLECTION_PRJ
@@ -35,6 +40,7 @@ router = APIRouter()
 async def get_all_projects(request: Request):
     """Endpoint to get projects"""
 
+    # Retrieve all projects from database
     db = request.app.state.db
     projects = await db.find(DB_COLLECTION_PRJ, {})
 
@@ -46,43 +52,38 @@ async def get_all_projects(request: Request):
              tags=[DB_COLLECTION_PRJ],
              response_model=Project,
              status_code=status.HTTP_201_CREATED)
-async def create_project_by_project_key(request: Request,
-                                        project: ProjectCreate):
+async def create_project_by_key(request: Request,
+                                project: ProjectCreate):
     """Endpoint to create project."""
 
     current_time = get_current_utc_time()
 
     # Prepare request data
     request_data = project.model_dump()
+    project_key = request_data["project_key"]
 
-    # Check if project_key already exists
-    db = request.app.state.db
-    result = await db.find_one(
-        DB_COLLECTION_PRJ,
-        {"project_key": request_data["project_key"]})
-
-    if result is not None:
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
-                            content={"error": f"Project "
-                                              f"{request_data['project_key']} "
-                                              f"already exists."})
+    # Check project exists
+    response = await get_project_by_key(request, project_key)
+    if response.status_code != status.HTTP_404_NOT_FOUND:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": f"Project {project_key} already exists"})
 
     # Initialize counts and timestamps
-    request_data["test_case_count"] = 0
-    request_data["test_execution_count"] = 0
-    request_data["test_cycle_count"] = 0
     request_data["created_at"] = current_time
     request_data["updated_at"] = current_time
 
     # Assign _id
     db_insert = Project(**request_data).model_dump()
-    db_insert["_id"] = request_data["project_key"]
+    db_insert["_id"] = project_key
+
+    # Create the project in the database
+    db = request.app.state.db
     await db.create(DB_COLLECTION_PRJ, db_insert)
 
     # Retrieve the updated project
-    created_project = await db.find_one(
-        DB_COLLECTION_PRJ,
-        {"project_key": request_data["project_key"]})
+    created_project = await db.find_one(DB_COLLECTION_PRJ,
+                                        {"project_key": project_key})
 
     return JSONResponse(status_code=status.HTTP_201_CREATED,
                         content=created_project)
@@ -92,22 +93,19 @@ async def create_project_by_project_key(request: Request,
             tags=[DB_COLLECTION_PRJ],
             response_model=Project,
             status_code=status.HTTP_200_OK)
-async def get_project_by_project_key(request: Request,
-                                     project_key: str):
+async def get_project_by_key(request: Request,
+                             project_key: str):
     """Endpoint to get project"""
 
     # Retrieve project from database
     db = request.app.state.db
-    result = await db.find_one(
-        DB_COLLECTION_PRJ,
-        {"project_key": project_key})
+    result = await db.find_one(DB_COLLECTION_PRJ,
+                               {"project_key": project_key})
 
     if result is None:
         # Project not found
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
-                            content={"error": f"Project "
-                                              f"{project_key} "
-                                              f"not found."})
+                            content={"error": f"Project {project_key} not found"})
     else:
         # Convert ObjectId to string
         return JSONResponse(status_code=status.HTTP_200_OK,
@@ -118,12 +116,17 @@ async def get_project_by_project_key(request: Request,
             tags=[DB_COLLECTION_PRJ],
             response_model=Project,
             status_code=status.HTTP_200_OK)
-async def update_project_by_project_key(request: Request,
-                                        project_key: str,
-                                        project_update: ProjectUpdate):
+async def update_project_by_key(request: Request,
+                                project_key: str,
+                                project_update: ProjectUpdate):
     """Endpoint to update project"""
 
     current_time = get_current_utc_time()
+
+    # Check project exists
+    response = await get_project_by_key(request, project_key)
+    if response.status_code == status.HTTP_404_NOT_FOUND:
+        return response
 
     # Prepare request data, excluding None values
     request_data = project_update.model_dump()
@@ -132,20 +135,13 @@ async def update_project_by_project_key(request: Request,
 
     # Update the project in the database
     db = request.app.state.db
-    result, matched_count = await db.update(DB_COLLECTION_PRJ,
-                                            {"project_key": project_key},
-                                            {"$set": request_data})
-
-    if matched_count == 0:
-        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
-                            content={"error": f"Project {project_key} "
-                                              f"not found"})
+    await db.update(DB_COLLECTION_PRJ,
+                    {"project_key": project_key},
+                    {"$set": request_data})
 
     # Retrieve the updated project
     updated_project = await db.find_one(DB_COLLECTION_PRJ,
                                         {"project_key": project_key})
-
-    updated = set(request_data.items()).issubset(set(updated_project.items()))
 
     return JSONResponse(status_code=status.HTTP_200_OK,
                         content=updated_project)
@@ -154,57 +150,34 @@ async def update_project_by_project_key(request: Request,
 @router.delete("/tm/api/v1/projects/{project_key}",
                tags=[DB_COLLECTION_PRJ],
                status_code=status.HTTP_204_NO_CONTENT)
-async def delete_project_by_project_key(request: Request,
-                                        project_key: str):
+async def delete_project_by_key(request: Request,
+                                project_key: str,
+                                force: dict):
     """Endpoint to delete project"""
+
+    # Check project exists
+    response = await get_project_by_key(request, project_key)
+    if response.status_code == status.HTTP_404_NOT_FOUND:
+        return response
 
     # Get all test-cases for the project
     db = request.app.state.db
-    response = await get_all_test_cases_by_project(request, project_key)
-    if len(json.loads(response.body.decode())) > 0:
-        # There are linked test-cases, cannot delete project
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
-                            content={"error": f"Project "
-                                              f"{project_key} "
-                                              f"has linked test-cases. "
-                                              f"Cannot delete."})
 
-    # TODO: add check for not existing test-executions, test-cycles linked
+    if force["force"] is False:
+        # TODO: add check for not existing test-executions, test-cycles linked
+        response = await get_all_test_cases_by_project(request, project_key)
+        if len(json.loads(response.body.decode())) > 0:
+            # There are linked test-cases, cannot delete project
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"error": f"Project {project_key} has linked test-cases"})
 
-    # Delete the project from the database
-    result, deleted_count = await db.delete(DB_COLLECTION_PRJ,
-                                            {"project_key": project_key})
-
-    if result.deleted_count == 0:
-        # Project not found
-        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
-                            content={"error": f"Project "
-                                              f"{project_key} "
-                                              f"not found."})
-
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.delete("/tm/api/v1/projects/{project_key}/nuke",
-               tags=[DB_COLLECTION_PRJ],
-               status_code=status.HTTP_204_NO_CONTENT)
-async def force_delete_project_by_project_key(request: Request,
-                                              project_key: str):
-    """Endpoint to force delete project"""
-
-    db = request.app.state.db
-
-    # TODO: delete the linked test-cases, test-executions, test-cycles
+    else:
+        # TODO: Delete all test-cases, executions, cycles linked to project
+        pass
 
     # Delete the project from the database
-    result, deleted_count = await db.delete(DB_COLLECTION_PRJ,
-                                            {"project_key": project_key})
-
-    if deleted_count == 0:
-        # Project not found
-        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND,
-                            content={"error": f"Project "
-                                              f"{project_key} "
-                                              f"not found."})
+    await db.delete(DB_COLLECTION_PRJ,
+                    {"project_key": project_key})
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

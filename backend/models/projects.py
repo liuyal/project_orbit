@@ -17,9 +17,6 @@ class Project(BaseModel):
     _id: str
     project_key: str
     description: str
-    test_case_count: int
-    test_execution_count: int
-    test_cycle_count: int
     created_at: str
     updated_at: str | None
     is_active: bool

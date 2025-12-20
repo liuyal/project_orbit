@@ -66,7 +66,7 @@ class OrbitBackendSanityTest(unittest.TestCase):
         logging.info(f"--- Test: {self._testMethodName} Complete ---")
 
     @pytest.mark.order(2)
-    def test_test_cases(self):
+    def test_cases(self):
         """ Test: Test Cases """
 
         logging.info(f"--- Starting test: {self._testMethodName} ---")
@@ -134,7 +134,7 @@ class OrbitBackendSanityTest(unittest.TestCase):
         logging.info(f"--- Test: {self._testMethodName} Complete ---")
 
     @pytest.mark.order(3)
-    def test_test_executions(self):
+    def test_executions(self):
         """ Test: Executions """
 
         logging.info(f"--- Starting test: {self._testMethodName} ---")
@@ -187,7 +187,68 @@ class OrbitBackendSanityTest(unittest.TestCase):
             response = requests.post(f"{self.__class__.url}/projects/{project_key}/test-cases/{test_case_key}/executions", json=payload)
             assert response.status_code == 201
         response = requests.get(f"{self.__class__.url}/projects/{project_key}/test-cases/{test_case_key}/executions")
-        print(response.content)
+        assert response.status_code == 200
+        assert len(response.json()) == n
+
+        self.__class__.clean_up_db()
+        logging.info(f"--- Test: {self._testMethodName} Complete ---")
+
+    @pytest.mark.order(4)
+    def test_cycles(self):
+        """ Test: Cycle """
+
+        logging.info(f"--- Starting test: {self._testMethodName} ---")
+        self.__class__.clean_up_db()
+
+        n = 1
+        for i in range(0, n):
+            payload = {"project_key": f"PRJ{i}", "description": f"Project #{i}"}
+            response = requests.post(f"{self.__class__.url}/projects", json=payload)
+            assert response.status_code == 201
+        response = requests.get(f"{self.__class__.url}/projects")
+        assert response.status_code == 200
+        assert len(response.json()) == n
+
+        n = 10
+        project_key = "PRJ0"
+        for i in range(0, n):
+            payload = {"test_case_key": f"{project_key}-T{i}", "project_key": project_key}
+            response = requests.post(f"{self.__class__.url}/projects/{project_key}/test-cases", json=payload)
+            assert response.status_code == 201
+        response = requests.get(f"{self.__class__.url}/test-cases")
+        assert response.status_code == 200
+        assert len(response.json()) == n
+
+        n = 5
+        project_key = "PRJ0"
+        test_case_key = f"{project_key}-T1"
+        for i in range(0, n):
+            payload = {"execution_key": f"{project_key}-E{i}"}
+            response = requests.post(f"{self.__class__.url}/projects/{project_key}/test-cases/{test_case_key}/executions", json=payload)
+            assert response.status_code == 201
+        response = requests.get(f"{self.__class__.url}/projects/{project_key}/test-cases/{test_case_key}/executions")
+        assert response.status_code == 200
+        assert len(response.json()) == n
+
+        n = 5
+        project_key = "PRJ0"
+        test_case_key = f"{project_key}-T2"
+        for i in range(n, n * 2):
+            payload = {"execution_key": f"{project_key}-E{i}"}
+            response = requests.post(f"{self.__class__.url}/projects/{project_key}/test-cases/{test_case_key}/executions", json=payload)
+            assert response.status_code == 201
+        response = requests.get(f"{self.__class__.url}/projects/{project_key}/test-cases/{test_case_key}/executions")
+        assert response.status_code == 200
+        assert len(response.json()) == n
+
+        n = 5
+        project_key = "PRJ0"
+        test_case_key = f"{project_key}-T3"
+        for i in range(n * 2, n * 3):
+            payload = {"execution_key": f"{project_key}-E{i}"}
+            response = requests.post(f"{self.__class__.url}/projects/{project_key}/test-cases/{test_case_key}/executions", json=payload)
+            assert response.status_code == 201
+        response = requests.get(f"{self.__class__.url}/projects/{project_key}/test-cases/{test_case_key}/executions")
         assert response.status_code == 200
         assert len(response.json()) == n
 

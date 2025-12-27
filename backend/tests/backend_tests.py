@@ -26,7 +26,7 @@ class OrbitBackendSanityTest(unittest.TestCase):
         cls.host = pytest.options['host']
         cls.port = pytest.options['port']
         cls.protocol = pytest.options['protocol']
-        cls.url = f"{cls.protocol}://{cls.host}:{cls.port}/tm/api/v1"
+        cls.url = f"{cls.protocol}://{cls.host}:{cls.port}/api/v1/tm"
 
         # Check if the server is up
         response = requests.get(f"{cls.protocol}://{cls.host}:{cls.port}/")

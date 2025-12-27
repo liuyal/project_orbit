@@ -5,6 +5,8 @@
 # License: MIT
 # ================================================================
 
+API_VERSION = "v1"
+
 DB_NAME = "orbit"
 DB_COLLECTION_PRJ = "projects"
 DB_COLLECTION_TC = "test-cases"

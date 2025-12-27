@@ -15,7 +15,10 @@ from fastapi import (
 )
 from starlette.responses import JSONResponse
 
-from backend.app_def.app_def import DB_COLLECTION_PRJ
+from backend.app_def.app_def import (
+    DB_COLLECTION_PRJ,
+    API_VERSION
+)
 from backend.models.projects import (
     Project,
     ProjectCreate,
@@ -28,7 +31,7 @@ from backend.tools.tools import (
 router = APIRouter()
 
 
-@router.get("/tm/api/v1/projects",
+@router.get(f"/api/{API_VERSION}/tm/projects",
             tags=[DB_COLLECTION_PRJ],
             response_model=list[Project],
             status_code=status.HTTP_200_OK)
@@ -43,7 +46,7 @@ async def get_all_projects(request: Request):
                         content=projects)
 
 
-@router.post("/tm/api/v1/projects",
+@router.post(f"/api/{API_VERSION}/tm/projects",
              tags=[DB_COLLECTION_PRJ],
              response_model=Project,
              status_code=status.HTTP_201_CREATED)
@@ -84,7 +87,7 @@ async def create_project_by_key(request: Request,
                         content=created_project)
 
 
-@router.get("/tm/api/v1/projects/{project_key}",
+@router.get(f"/api/{API_VERSION}/tm/projects/{{project_key}}",
             tags=[DB_COLLECTION_PRJ],
             response_model=Project,
             status_code=status.HTTP_200_OK)
@@ -107,7 +110,7 @@ async def get_project_by_key(request: Request,
                             content=result)
 
 
-@router.put("/tm/api/v1/projects/{project_key}",
+@router.put(f"/api/{API_VERSION}/tm/projects/{{project_key}}",
             tags=[DB_COLLECTION_PRJ],
             response_model=Project,
             status_code=status.HTTP_200_OK)
@@ -142,7 +145,7 @@ async def update_project_by_key(request: Request,
                         content=updated_project)
 
 
-@router.delete("/tm/api/v1/projects/{project_key}",
+@router.delete(f"/api/{API_VERSION}/tm/projects/{{project_key}}",
                tags=[DB_COLLECTION_PRJ],
                status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project_by_key(request: Request,

@@ -19,7 +19,8 @@ from starlette.responses import JSONResponse
 
 from backend.app_def.app_def import (
     DB_COLLECTION_TE,
-    DB_COLLECTION_TCY
+    DB_COLLECTION_TCY,
+    API_VERSION
 )
 from backend.models.test_cycles import (
     TestCycle,
@@ -37,7 +38,7 @@ from backend.tools.tools import get_current_utc_time
 router = APIRouter()
 
 
-@router.get("/tm/api/v1/projects/{project_key}/cycles",
+@router.get(f"/api/{API_VERSION}/tm/projects/{{project_key}}/cycles",
             tags=[DB_COLLECTION_TCY],
             response_model=list[TestCycle])
 async def get_all_cycles_for_project(request: Request,
@@ -58,7 +59,7 @@ async def get_all_cycles_for_project(request: Request,
                         content=test_cycles)
 
 
-@router.post("/tm/api/v1/projects/{project_key}/cycles",
+@router.post(f"/api/{API_VERSION}/tm/projects/{{project_key}}/cycles",
              tags=[DB_COLLECTION_TCY],
              response_model=TestCycle,
              status_code=status.HTTP_201_CREATED)
@@ -108,7 +109,7 @@ async def create_cycle_for_project(request: Request,
     return Response(status_code=status.HTTP_201_CREATED)
 
 
-@router.get("/tm/api/v1/cycles/{test_cycle_key}",
+@router.get(f"/api/{API_VERSION}/tm/cycles/{{test_cycle_key}}",
             tags=[DB_COLLECTION_TCY],
             response_model=TestCycle)
 async def get_cycle_by_key(request: Request,
@@ -133,7 +134,7 @@ async def get_cycle_by_key(request: Request,
             content=result)
 
 
-@router.put("/tm/api/v1/cycles/{test_cycle_key}",
+@router.put(f"/api/{API_VERSION}/tm/cycles/{{test_cycle_key}}",
             tags=[DB_COLLECTION_TCY],
             response_model=TestCycle)
 async def update_cycle_by_key(request: Request,
@@ -169,7 +170,7 @@ async def update_cycle_by_key(request: Request,
                         content=updated_test_cycle)
 
 
-@router.delete("/tm/api/v1/cycles/{test_cycle_key}",
+@router.delete(f"/api/{API_VERSION}/tm/cycles/{{test_cycle_key}}",
                tags=[DB_COLLECTION_TCY],
                status_code=status.HTTP_204_NO_CONTENT)
 async def delete_cycle_by_key(request: Request,
@@ -191,7 +192,7 @@ async def delete_cycle_by_key(request: Request,
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.get("/tm/api/v1/cycles/{test_cycle_key}/executions",
+@router.get(f"/api/{API_VERSION}/tm/cycles/{{test_cycle_key}}/executions",
             tags=[DB_COLLECTION_TCY],
             response_model=list[TestExecution])
 async def get_cycle_executions(request: Request,
@@ -206,7 +207,7 @@ async def get_cycle_executions(request: Request,
                         content=cycle_executions)
 
 
-@router.post("/tm/api/v1/cycles/{test_cycle_key}/executions",
+@router.post(f"/api/{API_VERSION}/tm/cycles/{{test_cycle_key}}/executions",
              tags=[DB_COLLECTION_TCY],
              status_code=status.HTTP_204_NO_CONTENT)
 async def add_execution_to_cycle(request: Request,
@@ -253,7 +254,7 @@ async def add_execution_to_cycle(request: Request,
                         content=cycle_data)
 
 
-@router.delete("/tm/api/v1/cycles/{test_cycle_key}/executions/{execution_key}",
+@router.delete(f"/api/{API_VERSION}/tm/cycles/{{test_cycle_key}}/executions/{{execution_key}}",
                tags=[DB_COLLECTION_TCY],
                status_code=status.HTTP_204_NO_CONTENT)
 async def remove_executions_from_cycle(request: Request,

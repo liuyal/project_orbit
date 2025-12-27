@@ -16,7 +16,8 @@ from fastapi import (
 from starlette.responses import JSONResponse
 
 from backend.app_def.app_def import (
-    DB_COLLECTION_TC
+    DB_COLLECTION_TC,
+    API_VERSION
 )
 from backend.models.test_cases import (
     TestCase,
@@ -29,7 +30,7 @@ from backend.tools.tools import get_current_utc_time
 router = APIRouter()
 
 
-@router.get("/tm/api/v1/test-cases",
+@router.get(f"/api/{API_VERSION}/tm/test-cases",
             tags=[DB_COLLECTION_TC],
             response_model=list[TestCase])
 async def get_all_test_cases(request: Request):
@@ -43,7 +44,7 @@ async def get_all_test_cases(request: Request):
                         content=test_cases)
 
 
-@router.get("/tm/api/v1/projects/{project_key}/test-cases",
+@router.get(f"/api/{API_VERSION}/tm/projects/{{project_key}}/test-cases",
             tags=[DB_COLLECTION_TC],
             response_model=list[TestCase])
 async def get_all_test_cases_by_project(request: Request,
@@ -64,7 +65,7 @@ async def get_all_test_cases_by_project(request: Request,
                         content=test_cases)
 
 
-@router.post("/tm/api/v1/projects/{project_key}/test-cases",
+@router.post(f"/api/{API_VERSION}/tm/projects/{{project_key}}/test-cases",
              tags=[DB_COLLECTION_TC],
              status_code=status.HTTP_201_CREATED)
 async def create_test_case_by_project(request: Request,
@@ -113,7 +114,7 @@ async def create_test_case_by_project(request: Request,
     return Response(status_code=status.HTTP_201_CREATED)
 
 
-@router.delete("/tm/api/v1/projects/{project_key}/test-cases",
+@router.delete(f"/api/{API_VERSION}/tm/projects/{{project_key}}/test-cases",
                tags=[DB_COLLECTION_TC],
                status_code=status.HTTP_204_NO_CONTENT)
 async def delete_all_test_case_by_project(request: Request,
@@ -137,7 +138,7 @@ async def delete_all_test_case_by_project(request: Request,
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.get("/tm/api/v1/projects/{project_key}/test-cases/{test_case_key}",
+@router.get(f"/api/{API_VERSION}/tm/projects/{{project_key}}/test-cases/{{test_case_key}}",
             tags=[DB_COLLECTION_TC],
             response_model=TestCase)
 async def get_test_case_by_key(request: Request,
@@ -166,7 +167,7 @@ async def get_test_case_by_key(request: Request,
             content=result)
 
 
-@router.put("/tm/api/v1/projects/{project_key}/test-cases/{test_case_key}",
+@router.put(f"/api/{API_VERSION}/tm/projects/{{project_key}}/test-cases/{{test_case_key}}",
             tags=[DB_COLLECTION_TC],
             response_model=TestCase)
 async def update_test_case_by_key(request: Request,
@@ -208,7 +209,7 @@ async def update_test_case_by_key(request: Request,
                         content=updated_test_case)
 
 
-@router.delete("/tm/api/v1/projects/{project_key}/test-cases/{test_case_key}",
+@router.delete(f"/api/{API_VERSION}/tm/projects/{{project_key}}/test-cases/{{test_case_key}}",
                tags=[DB_COLLECTION_TC],
                status_code=status.HTTP_204_NO_CONTENT)
 async def delete_test_case_by_key(request: Request,
